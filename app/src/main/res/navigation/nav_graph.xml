@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/signInFragment">
+    <fragment
+        android:id="@+id/signInFragment"
+        tools:layout="@layout/fragment_sign_in"
+        android:name="com.onelogin.oidc.demo.SignInFragment"
+        android:label="SignInFragment" >
+        <action
+            android:id="@+id/action_signInFragment_to_userFragment"
+            app:destination="@id/userFragment"
+            app:popUpTo="@id/signInFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/userFragment"
+        android:name="com.onelogin.oidc.demo.UserFragment"
+        tools:layout="@layout/fragment_user"
+        android:label="UserFragment" >
+        <action
+            android:id="@+id/action_userFragment_to_signInFragment"
+            app:destination="@id/signInFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/userFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_userFragment_to_userInfoFragment"
+            app:destination="@id/userInfoFragment" />
+        <action
+            android:id="@+id/action_userFragment_to_tokenIntrospectionFragment"
+            app:destination="@id/tokenIntrospectionFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/userInfoFragment"
+        android:name="com.onelogin.oidc.demo.UserInfoFragment"
+        tools:layout="@layout/fragment_user_info"
+        android:label="LoginFragment" />
+    <fragment
+        android:id="@+id/tokenIntrospectionFragment"
+        tools:layout="@layout/fragment_token_introspection"
+        android:name="com.onelogin.oidc.demo.TokenIntrospectionFragment"
+        android:label="TokenIntrospectionFragment" />
+</navigation>

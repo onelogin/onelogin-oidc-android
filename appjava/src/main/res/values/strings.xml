@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">OIDC Demo Java</string>
+    <string name="error_getting_session_info">Error getting Session Info: %s</string>
+    <string name="error_signing_in">Error signing in: %s</string>
+    <string name="error_logging_out">Error logging out: %s</string>
+    <string name="error_refreshing_token">Error refreshing token: %s</string>
+    <string name="sign_in">Sign In</string>
+    <string name="log_out">Log Out</string>
+    <string name="refresh_token">Refresh Token</string>
+    <string name="get_user_info">Get User Info</string>
+    <string name="user_id">User ID:</string>
+    <string name="email">Email:</string>
+    <string name="preferred_username">Preferred Username:</string>
+    <string name="updated_at">Updated at:</string>
+    <string name="active">Active:</string>
+    <string name="expires_on">Expires on:</string>
+    <string name="issued_at">Issued at:</string>
+    <string name="issuer">Issuer:</string>
+    <string name="token_introspection">Token introspection</string>
+</resources>

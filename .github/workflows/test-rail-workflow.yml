@@ -1,0 +1,116 @@
+name: Test Rail Tests
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+      - internal
+
+jobs:
+  run-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Build with Gradle
+        env:
+          ISSUER: ${{ secrets.OIDC_ISSUER}}
+          CLIENT_ID: ${{ secrets.OIDC_CLIENT_ID}}
+          REDIRECT_URL: ${{ secrets.OIDC_REDIRECT_URL}}
+          REDIRECT_SCHEME: ${{ secrets.OIDC_REDIRECT_SCHEME}}
+          TEST_RAIL_KEY: ${{ secrets.TESTRAIL_KEY}}
+        run: ./gradlew build test
+      - name: Add Test Results to TestRail
+        run: |
+          source ./TestRail_Scripts/TestRailFileConfig.sh
+          source ./TestRail_Scripts/TestRailUserConfig.sh
+
+          #File Set up
+          echo "No ID found" > "$PATH_TO_TESTRAIL_SCRIPTS_FOLDER$ID_FILE"
+          echo " " > "$PATH_TO_TESTRAIL_SCRIPTS_FOLDER$TEST_RESULTS_FILE"
+
+          #Get test results
+          (cd "$PATH_TO_TEST_RESULTS" && cat *.xml >> "../../../../$PATH_TO_TESTRAIL_SCRIPTS_FOLDER$TEST_RESULTS_FILE")
+
+          #Return to TestRail Scripts_Folder
+          cd "$PATH_TO_TESTRAIL_SCRIPTS_FOLDER"
+
+          #Get Test Results & Case IDs
+          while IFS= read -r LINE; do
+          if echo "$LINE" | grep -q "archived"; then
+             ARCHIVED=1
+          elif echo "$LINE" | grep -oqP '(?<=CaseID: )[0-9]+'; then
+              STATUS_ID=0
+              ID=$(echo $LINE | grep -oP '(?<=CaseID: )[0-9]+')
+              CASE_ARRAY+=($ID)
+              TEST_NAME=$(echo $LINE | grep -oP '(?<=Test Name: ).*?(?=,)')
+              if grep -oqP "(?<=testcase name=\")$TEST_NAME.*(?=/>)" $TEST_RESULTS_FILE; then
+                  STATUS_ID=1
+                  COMMENT="Test passed"
+                  #echo $COMMENT
+              elif grep -oqP "(?<=testcase name=\")$TEST_NAME.*(?=>)" $TEST_RESULTS_FILE; then
+                  STATUS_ID=5
+                  COMMENT="Test failed"
+                  #echo $COMMENT
+              fi
+              if [ $STATUS_ID -eq 0 ]; then
+                  echo "Could not find test result for $TEST_NAME"
+              else
+                  TEST_RESULT="{\"case_id\": $ID, \"status_id\": $STATUS_ID, \"comment\": \"$COMMENT\"}"
+                  RESULTS_ARRAY+=($TEST_RESULT)
+              fi
+          else
+              ERROR=1
+          fi
+          done < $MAP_FILE
+
+          #Format Non-empty Arrays
+          if [ "${#CASE_ARRAY[@]}" -eq 0 ]; then
+              echo "No active cases found in the map."
+          elif [ "${#RESULTS_ARRAY[@]}" -eq 0 ]; then
+              echo "No results found for active cases in the map."
+          else
+              CASE_ARRAY=$(IFS=,; echo ["${CASE_ARRAY[*]}"])
+              RESULTS_ARRAY=$(echo ["$(echo "${RESULTS_ARRAY[*]}" | sed 's/} {/},\n{/g')"])
+          fi
+
+          # use array as variable to add test run with script
+          curl "https://onelogininc.testrail.net/index.php?/api/v2/add_run/1" \
+          -o $ID_FILE \
+          -H "Content-Type: application/json" \
+          -v -u $EMAIL:${{ secrets.TESTRAIL_KEY}} \
+          -d "{\"suite_id\": 4,
+          \"name\": \"$RUN_NAME\",
+          \"include_all\": false,
+          \"case_ids\": $CASE_ARRAY}"
+
+          # Get run ID if it exists
+          if grep -oqP '(?<="id":).*?(?=,)' $ID_FILE; then
+              RUN_ID=$(grep -o -P '(?<="id":).*?(?=,)' $ID_FILE)
+          elif grep -oqP '"error"' $ID_FILE; then
+              echo "Error occurred while adding run."
+              cat $ID_FILE
+          fi
+
+          #add results using RUN_ID
+          curl https://onelogininc.testrail.net/index.php?/api/v2/add_results_for_cases/$RUN_ID \
+          -o $ID_FILE \
+          -H "Content-Type: application/json" \
+          -v -u $EMAIL:${{ secrets.TESTRAIL_KEY}} \
+          -d "{\"results\":
+          $RESULTS_ARRAY}"
+
+          TEST_COUNT=$(grep -o '"id":' $ID_FILE | wc -l)
+          echo "$TEST_COUNT test results added to TestRail."
+
+          curl https://onelogininc.testrail.net/index.php?/api/v2/close_run/$RUN_ID \
+          -H "Content-Type: application/json" \
+          -o $ID_FILE \
+          -v -u $EMAIL:${{ secrets.TESTRAIL_KEY}} \
+          --request POST \
+
+          echo "TestRail Test Run closed"

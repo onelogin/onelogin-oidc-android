@@ -1,0 +1,13 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+/TestRail_Scripts/diff.txt
+/TestRail_Scripts/ID.txt
+/TestRail_Scripts/TestRailCaseMap.txt-e
+/TestRail_Scripts/newcasesgrep.txt

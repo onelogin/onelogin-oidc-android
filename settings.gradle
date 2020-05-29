@@ -1,0 +1,4 @@
+rootProject.name='OIDC SDK Demo'
+include ':app'
+include ':oneloginoidc'
+include ':appjava'
