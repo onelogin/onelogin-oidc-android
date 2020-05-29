@@ -6,10 +6,10 @@ def propertiesFile = project.rootProject.file('local.properties')
 if (propertiesFile.exists()) {
     properties.load(propertiesFile.newDataInputStream())
 }
-def issuer = properties.issuer ?: System.getenv('ISSUER')
-def clientId = properties.client_id ?: System.getenv('CLIENT_ID')
-def redirectUrl = properties.redirect_url ?: System.getenv('REDIRECT_URL')
-def redirectScheme = properties.redirect_scheme ?: System.getenv('REDIRECT_SCHEME')
+def issuer = properties.issuer ?: System.getenv('ISSUER') ?: ""
+def clientId = properties.client_id ?: System.getenv('CLIENT_ID') ?: ""
+def redirectUrl = properties.redirect_url ?: System.getenv('REDIRECT_URL') ?: ""
+def redirectScheme = properties.redirect_scheme ?: System.getenv('REDIRECT_SCHEME') ?: ""
 
 android {
     compileSdkVersion 29

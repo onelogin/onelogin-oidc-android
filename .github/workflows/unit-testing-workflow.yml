@@ -20,9 +20,4 @@ jobs:
         with:
           java-version: 1.8
       - name: Build and Test
-        env:
-          ISSUER: ${{ secrets.OIDC_ISSUER}}
-          CLIENT_ID: ${{ secrets.OIDC_CLIENT_ID}}
-          REDIRECT_URL: ${{ secrets.OIDC_REDIRECT_URL}}
-          REDIRECT_SCHEME: ${{ secrets.OIDC_REDIRECT_SCHEME}}
-        run: ./gradlew build test dokka
+        run: ./gradlew oneloginoidc:build oneloginoidc:test oneloginoidc:dokka

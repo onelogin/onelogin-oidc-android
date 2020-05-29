@@ -5,7 +5,6 @@ on:
     branches:
       - develop
       - master
-      - internal
 
 jobs:
   run-unit-tests:
@@ -18,12 +17,8 @@ jobs:
           java-version: 1.8
       - name: Build with Gradle
         env:
-          ISSUER: ${{ secrets.OIDC_ISSUER}}
-          CLIENT_ID: ${{ secrets.OIDC_CLIENT_ID}}
-          REDIRECT_URL: ${{ secrets.OIDC_REDIRECT_URL}}
-          REDIRECT_SCHEME: ${{ secrets.OIDC_REDIRECT_SCHEME}}
           TEST_RAIL_KEY: ${{ secrets.TESTRAIL_KEY}}
-        run: ./gradlew build test
+        run: ./gradlew oneloginoidc:build oneloginoidc:test
       - name: Add Test Results to TestRail
         run: |
           source ./TestRail_Scripts/TestRailFileConfig.sh
