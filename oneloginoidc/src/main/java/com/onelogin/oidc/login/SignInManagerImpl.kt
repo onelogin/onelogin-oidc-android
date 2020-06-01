@@ -14,7 +14,7 @@ internal class SignInManagerImpl(
     private val configuration: OIDCConfiguration,
     private val authorizationService: AuthorizationService,
     private val repository: OIDCRepository,
-    private val signInFragmentProvider: (AuthorizationService, AuthorizationRequest) -> SignInFragment
+    private val signInFragmentProvider: (AuthorizationRequest) -> SignInFragment
 ) : SignInManager {
 
     override suspend fun signIn(
@@ -26,7 +26,7 @@ internal class SignInManagerImpl(
 
         if (activity is FragmentActivity) {
             removeFragmentIfAttached(activity)
-            val loginFragment = signInFragmentProvider(authorizationService, authorizationRequest)
+            val loginFragment = signInFragmentProvider(authorizationRequest)
             attachLoginFragment(activity, loginFragment)
             loginFragment.resultChannel.consumeEach { (response, exception) ->
                 if (exception != null) {

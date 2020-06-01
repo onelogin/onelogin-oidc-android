@@ -43,7 +43,6 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(":oneloginoidc")
 
     implementation 'androidx.appcompat:appcompat:1.1.0'

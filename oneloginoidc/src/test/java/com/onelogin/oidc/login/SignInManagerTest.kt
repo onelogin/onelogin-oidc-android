@@ -40,12 +40,12 @@ class SignInManagerTest {
         .clientId("testClientId")
         .build()
 
-    lateinit var signInManager: SignInManager
+    private lateinit var signInManager: SignInManager
 
     @Before
     fun setup() {
         signInManager =
-            SignInManagerImpl(oidcConfiguration, authorizationService, repository) { _, _ ->
+            SignInManagerImpl(oidcConfiguration, authorizationService, repository) { _ ->
                 signInFragment
             }
 

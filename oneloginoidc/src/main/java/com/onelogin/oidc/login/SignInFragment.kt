@@ -2,28 +2,28 @@ package com.onelogin.oidc.login
 
 import android.content.Intent
 import androidx.fragment.app.Fragment
+import com.onelogin.oidc.data.AuthorizationServiceProvider
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
-import net.openid.appauth.AuthorizationService
 import timber.log.Timber
 
 
-internal class SignInFragment(
-    private val authorizationService: AuthorizationService,
-    private var authorizationRequest: AuthorizationRequest?
-) : Fragment() {
+internal class SignInFragment : Fragment() {
 
     internal val resultChannel = Channel<Pair<AuthorizationResponse?, AuthorizationException?>>()
 
     override fun onResume() {
         super.onResume()
+        val authorizationRequestString = arguments?.getString(ARG_AUTHORIZATION_REQUEST)
+        val authorizationRequest = authorizationRequestString?.let { AuthorizationRequest.jsonDeserialize(authorizationRequestString) }
         authorizationRequest?.let {
-            val authIntent = authorizationService.getAuthorizationRequestIntent(it)
+
+            val authIntent = AuthorizationServiceProvider.authorizationService.getAuthorizationRequestIntent(it)
             startActivityForResult(authIntent, AUTHORIZATION_REQUEST_CODE)
-            authorizationRequest = null
+            arguments?.putString(ARG_AUTHORIZATION_REQUEST, null)
         }
     }
 
@@ -50,6 +50,7 @@ internal class SignInFragment(
 
     companion object {
         internal const val AUTHORIZATION_REQUEST_CODE = 34001
+        internal const val ARG_AUTHORIZATION_REQUEST = "authorization_request"
         internal const val LOGIN_FRAGMENT_TAG = "login_fragment"
     }
 }

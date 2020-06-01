@@ -39,10 +39,12 @@ class OneLoginEncryptionManager(
         try {
             sharedPreferences = context.getSharedPreferences(ONELOGIN_SHARED_PREFERENCES, MODE_PRIVATE)
             if (!containsAlias()) {
+                sharedPreferences.edit().clear().apply()
                 generateKeys()
             } else {
                 if (!verifyKeys()) {
                     removeKeys()
+                    sharedPreferences.edit().clear().apply()
                     generateKeys()
                 }
             }
@@ -258,6 +260,6 @@ class OneLoginEncryptionManager(
         private const val RSA_ENCRYPTION = "RSA"
         private const val RSA_MODE = "RSA/ECB/PKCS1Padding"
         private const val AES_ENCRYPTED_KEY = "oneloginAesEncrypted"
-        private const val ONELOGIN_SHARED_PREFERENCES = "oneloginPreferences"
+        internal const val ONELOGIN_SHARED_PREFERENCES = "oneloginPreferences"
     }
 }
