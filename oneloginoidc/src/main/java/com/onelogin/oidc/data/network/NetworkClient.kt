@@ -35,7 +35,7 @@ internal class NetworkClient(
             if (response.isSuccessful) {
                 return@withContext
             }
-            response.body()?.let {
+            response.body?.let {
                 val error = Gson().fromJson(it.string(), ErrorResponse::class.java)
                 throw NetworkException(error.errorDescription)
             } ?: throw  NetworkException("Unable to revoke token")
@@ -51,10 +51,10 @@ internal class NetworkClient(
         val response = okHttpClient.newCall(request).execute()
 
         return@withContext response.use {
-            if (response.isSuccessful && response.body() != null) {
-                Gson().fromJson(response.body()!!.string(), UserInfo::class.java)
+            if (response.isSuccessful && response.body != null) {
+                Gson().fromJson(response.body!!.string(), UserInfo::class.java)
             } else {
-                response.body()?.let {
+                response.body?.let {
                     val error = Gson().fromJson(it.string(), ErrorResponse::class.java)
                     throw NetworkException(error.errorDescription)
                 } ?: throw NetworkException("Unable to get user info")
@@ -77,10 +77,10 @@ internal class NetworkClient(
         val response = okHttpClient.newCall(request).execute()
 
         return@withContext response.use {
-            if (response.isSuccessful && response.body() != null) {
-                Gson().fromJson(response.body()!!.string(), TokenIntrospection::class.java)
+            if (response.isSuccessful && response.body != null) {
+                Gson().fromJson(response.body!!.string(), TokenIntrospection::class.java)
             } else {
-                response.body()?.let {
+                response.body?.let {
                     val error = Gson().fromJson(it.string(), ErrorResponse::class.java)
                     throw NetworkException(error.errorDescription)
                 } ?: throw NetworkException("Unable to introspect token")
