@@ -174,7 +174,10 @@ class SignInManagerTest {
                 capture(serviceCallbackSlot)
             )
         } answers {
-            serviceCallbackSlot.captured.onTokenRequestCompleted(null, AuthorizationException(1, 1, "error", "testError", null, null))
+            serviceCallbackSlot.captured.onTokenRequestCompleted(
+                null,
+                AuthorizationException(1, 1, "error", "testError", null, null)
+            )
         }
 
         signInManager.signIn(activity, callback)
@@ -182,5 +185,4 @@ class SignInManagerTest {
         verify { authorizationService.performTokenRequest(any(), any()) }
         verify { callback.onError(any()) }
     }
-
 }

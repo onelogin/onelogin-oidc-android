@@ -96,5 +96,4 @@ internal class SignInManagerImpl(
         )
         .setScope(configuration.scopes.joinToString(" "))
         .build()
-
 }

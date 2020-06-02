@@ -71,5 +71,4 @@ class OIDCConfigurationTest {
         assertEquals("redirectUrl", configuration.redirectUrl)
         assertEquals(listOf("openid"), configuration.scopes)
     }
-
 }

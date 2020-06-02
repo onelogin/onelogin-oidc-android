@@ -76,5 +76,4 @@ class OIDCConfiguration private constructor(
             )
         }
     }
-
 }

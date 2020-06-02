@@ -37,7 +37,8 @@ class OneLoginEncryptionManager(
 
     init {
         try {
-            sharedPreferences = context.getSharedPreferences(ONELOGIN_SHARED_PREFERENCES, MODE_PRIVATE)
+            sharedPreferences =
+                context.getSharedPreferences(ONELOGIN_SHARED_PREFERENCES, MODE_PRIVATE)
             if (!containsAlias()) {
                 sharedPreferences.edit().clear().apply()
                 generateKeys()
@@ -111,9 +112,9 @@ class OneLoginEncryptionManager(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, PROVIDER)
             val keyGenParameterSpec = KeyGenParameterSpec.Builder(
-                    ALIAS,
-                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-                )
+                ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setRandomizedEncryptionRequired(true)

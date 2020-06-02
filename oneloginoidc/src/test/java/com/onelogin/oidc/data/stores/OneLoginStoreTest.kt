@@ -54,5 +54,4 @@ class OneLoginStoreTest {
         verify { editor.remove("testKey") }
         verify { editor.commit() }
     }
-
 }

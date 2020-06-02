@@ -3,7 +3,7 @@ package com.onelogin.oidc.data.stores
 /**
  * Takes an string and encrypts its content, returning an encrypted version of the string
  */
-interface EncryptionManager{
+interface EncryptionManager {
 
     /**
      * Takes some plain data and returns an encrypted and version of the data

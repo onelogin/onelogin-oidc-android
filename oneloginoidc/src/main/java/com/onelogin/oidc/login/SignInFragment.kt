@@ -10,7 +10,6 @@ import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
 import timber.log.Timber
 
-
 internal class SignInFragment : Fragment() {
 
     internal val resultChannel = Channel<Pair<AuthorizationResponse?, AuthorizationException?>>()

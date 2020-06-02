@@ -25,7 +25,6 @@ import net.openid.appauth.TokenResponse
 import timber.log.Timber
 import java.lang.ref.WeakReference
 
-
 internal class OIDCClientImpl(
     private val authorizationService: AuthorizationService,
     private val networkClient: NetworkClient,
@@ -63,7 +62,6 @@ internal class OIDCClientImpl(
                 }
             }
         }
-
     }
 
     override fun refreshToken(refreshTokenCallback: Callback<RefreshSuccess, RefreshError>) {

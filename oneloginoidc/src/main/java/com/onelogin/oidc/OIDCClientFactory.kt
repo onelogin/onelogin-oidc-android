@@ -45,5 +45,4 @@ internal class OIDCClientFactory(
 
         return OIDCClientImpl(authorizationService, networkClient, repository, signInManager)
     }
-
 }
