@@ -3,7 +3,9 @@ package com.onelogin.oidc.demo
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.onelogin.oidc.OneLoginOIDC
 import com.onelogin.oidc.demo.DemoOIDCApp.Companion.LOG_TAG
@@ -13,6 +15,12 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     private val oidcClient = OneLoginOIDC.getClient()
+    private val navController: NavController
+        get() = Navigation.findNavController(
+            this,
+            R.id.nav_host_fragment
+        )
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +39,7 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(
                 container,
                 getString(R.string.error_getting_session_info, error.message),
-                Snackbar.LENGTH_SHORT
+                BaseTransientBottomBar.LENGTH_SHORT
             )
                 .show()
             Log.d(
@@ -43,7 +51,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showUserScreen() {
-        val action = SignInFragmentDirections.actionSignInFragmentToUserFragment()
-        Navigation.findNavController(this, R.id.nav_host_fragment).navigate(action)
+        if (navController.currentDestination?.id == R.id.signInFragment) {
+            val action = SignInFragmentDirections.actionSignInFragmentToUserFragment()
+            navController.navigate(action)
+        }
     }
 }
