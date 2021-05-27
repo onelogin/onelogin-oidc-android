@@ -5,6 +5,7 @@ buildscript {
     ext.dokka_version = '0.10.1'
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
     dependencies {
@@ -22,6 +23,7 @@ buildscript {
 allprojects {
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
 }
