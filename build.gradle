@@ -20,6 +20,10 @@ buildscript {
     }
 }
 
+plugins {
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+}
+
 allprojects {
     repositories {
         google()
@@ -31,3 +35,5 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+apply from: "${rootDir}/scripts/publish-root.gradle"
