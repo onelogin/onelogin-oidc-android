@@ -37,7 +37,7 @@ jobs:
 
       - name: Copy Files From AWS S3
         run: |
-          aws s3 cp s3://onelogin-endpoint/secrets/android/sonatype_credentials.gpg sonatype_credentials.gpg
+          aws s3 cp s3://onelogin-endpoint/secrets/sonatype_credentials.gpg sonatype_credentials.gpg
 
       - name: Build Release
         run: ./gradlew oneloginoidc:assembleRelease
