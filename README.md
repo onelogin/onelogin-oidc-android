@@ -28,7 +28,7 @@ To get more info about how to configure an app for OIDC visit the [Overview of O
 To install the library add the following dependency to the `build.gradle` file of your module:
 
 ```
-    include "com.onelogin.oidc:oidc:1.0.0"
+    implementation("com.onelogin:onelogin-oidc-android-sdk:1.0.0")
 ```
 
 
