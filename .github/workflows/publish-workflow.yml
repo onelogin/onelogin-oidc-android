@@ -28,16 +28,14 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
           SECRET_NAME: common/gh-actions/android
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Copy Files From AWS S3
+        # Base64 decodes and pipes the GPG key content into the secret file
+      - name: Prepare environment
+        env:
+          GPG_KEY_CONTENTS: ${{ secrets.GPG_KEY_CONTENTS }}
+          SIGNING_SECRET_KEY_RING_FILE: ${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}
         run: |
-          aws s3 cp s3://onelogin-endpoint/secrets/sonatype_credentials.gpg sonatype_credentials.gpg
+          git fetch --unshallow
+          sudo bash -c "echo '$GPG_KEY_CONTENTS' | base64 -d > '$SIGNING_SECRET_KEY_RING_FILE'"
 
       - name: Build Release
         run: ./gradlew oneloginoidc:assembleRelease
