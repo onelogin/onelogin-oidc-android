@@ -1,9 +1,6 @@
 name: Publish library
 
 on:
-  push:
-    branches:
-      - LAUN-462
   release:
     types:
       - created
@@ -45,7 +42,7 @@ jobs:
 
         # Runs upload, and then closes & releases the repository
       - name: Publish to MavenCentral
-        run: ./gradlew publishReleasePublicationToSonatypeRepository --max-workers 1
+        run: ./gradlew publishReleasePublicationToSonatypeRepository --max-workers 1 closeAndReleaseSonatypeStagingRepository
         env:
           OSSRH_USERNAME: ${{ env.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ env.OSSRH_PASSWORD }}
