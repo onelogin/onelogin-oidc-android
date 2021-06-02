@@ -31,11 +31,11 @@ jobs:
         # Base64 decodes and pipes the GPG key content into the secret file
       - name: Prepare environment
         env:
-          GPG_KEY_CONTENTS: ${{ secrets.GPG_KEY_CONTENTS }}
-          SIGNING_SECRET_KEY_RING_FILE: ${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}
+          GPG_KEY_CONTENTS: ${{ env.GPG_KEY_CONTENTS }}
+          SIGNING_SECRET_KEY_RING_FILE: sonatype_signing_key.gpg
         run: |
           git fetch --unshallow
-          sudo bash -c "echo '$GPG_KEY_CONTENTS' | base64 -d > sonatype_signing_key.gpg"
+          sudo bash -c "echo '$GPG_KEY_CONTENTS' | base64 -d > '$SIGNING_SECRET_KEY_RING_FILE'"
 
       - name: Build Release
         run: ./gradlew oneloginoidc:assembleRelease
