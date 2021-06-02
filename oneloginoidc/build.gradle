@@ -83,5 +83,3 @@ ext {
 }
 
 apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
-//apply from: 'install.gradle'
-//apply from: 'bintray.gradle'
