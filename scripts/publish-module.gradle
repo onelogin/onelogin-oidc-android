@@ -26,8 +26,6 @@ afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                // The coordinates of the library, being set from variables that
-                // we'll set up later
                 groupId PUBLISH_GROUP_ID
                 artifactId PUBLISH_ARTIFACT_ID
                 version PUBLISH_VERSION
@@ -56,7 +54,7 @@ afterEvaluate {
                         developer {
                             id = 'TrishIsAtOneLogin'
                             name = 'Trish Huynh'
-                            email = 'trish.huynh@onelogin.com'
+                            email = 'developers@onelogin.com'
                         }
                     }
 
