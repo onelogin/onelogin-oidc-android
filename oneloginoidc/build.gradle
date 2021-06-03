@@ -11,7 +11,7 @@ android {
         minSdkVersion 19
         targetSdkVersion 29
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -76,6 +76,10 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
     args "-F", "src/**/*.kt"
 }
 
+ext {
+    PUBLISH_GROUP_ID = 'com.onelogin'
+    PUBLISH_VERSION = android.defaultConfig.versionName
+    PUBLISH_ARTIFACT_ID = 'onelogin-oidc-android-sdk'
+}
 
-apply from: 'install.gradle'
-apply from: 'bintray.gradle'
+apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
