@@ -14,6 +14,7 @@ class DemoOIDCApp : Application() {
                 .issuer(BuildConfig.ISSUER)
                 .redirectUrl(BuildConfig.REDIRECT_URL)
                 .scopes(listOf("openid"))
+                .loginHint("test@email.com")
                 .isDebug(true)
                 .build()
         )

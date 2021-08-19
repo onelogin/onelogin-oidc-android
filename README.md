@@ -53,6 +53,7 @@ OIDCConfiguration.Builder()
     .redirectUrl(BuildConfig.REDIRECT_URL)
     .scopes(listOf("openid"))
     .isDebug(true)
+    .loginHint("test@email.com")
     .build()
 ```
 
@@ -65,6 +66,7 @@ The supported parameters of the configuration are:
 | redirectUrl   | Redirect Url specified in the OneLogin Application                                                                | Required |
 | scopes        | List of scopes of the authorization token, it should include `openid`                                             | Required |
 | isDebug       | Specifies if the instance of the library should be initialized in debug mode, wich will log additional information| Optional |
+| loginHint     | A string hint to the Authorization Server about the login identifier the End-User might use to log in             | Optional |
 
 This initialization only needs to occur one time, and after this an instance of the `OIDCCLient` can be get by Calling `OneLoginOIDC.getClient()` this client is a singleton that can be used to perform any of the supported `OIDCClient` operations.
 

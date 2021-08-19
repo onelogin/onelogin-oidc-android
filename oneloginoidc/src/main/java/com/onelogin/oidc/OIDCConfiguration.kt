@@ -8,7 +8,8 @@ class OIDCConfiguration private constructor(
     internal val redirectUrl: String,
     internal val scopes: List<String>,
     internal val encryptionManager: EncryptionManager?,
-    internal val debug: Boolean
+    internal val debug: Boolean,
+    internal val loginHint: String?
 ) {
 
     class Builder {
@@ -18,6 +19,7 @@ class OIDCConfiguration private constructor(
         private var scopes: List<String> = emptyList()
         private var encryptionManager: EncryptionManager? = null
         private var debug: Boolean = false
+        private var loginHint: String? = null
 
         fun issuer(issuer: String): Builder {
             this.issuer = issuer
@@ -41,6 +43,11 @@ class OIDCConfiguration private constructor(
 
         fun isDebug(debug: Boolean): Builder {
             this.debug = debug
+            return this
+        }
+
+        fun loginHint(loginHint: String): Builder {
+            this.loginHint = loginHint
             return this
         }
 
@@ -72,7 +79,8 @@ class OIDCConfiguration private constructor(
                 redirectUrl!!,
                 scopes,
                 encryptionManager,
-                debug
+                debug,
+                loginHint
             )
         }
     }
