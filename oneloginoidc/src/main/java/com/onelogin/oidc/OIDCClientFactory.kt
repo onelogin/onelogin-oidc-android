@@ -13,7 +13,6 @@ import com.onelogin.oidc.data.stores.OneLoginStore
 import com.onelogin.oidc.login.SignInFragment
 import com.onelogin.oidc.login.SignInFragment.Companion.ARG_AUTHORIZATION_REQUEST
 import com.onelogin.oidc.login.SignInManagerImpl
-import timber.log.Timber
 
 internal class OIDCClientFactory(
     private val context: Context,
