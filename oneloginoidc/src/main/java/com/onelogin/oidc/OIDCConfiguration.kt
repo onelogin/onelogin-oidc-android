@@ -9,7 +9,6 @@ class OIDCConfiguration private constructor(
     internal val scopes: List<String>,
     internal val loginHint: String?,
     internal val encryptionManager: EncryptionManager?,
-
     internal val debug: Boolean
 ) {
 
