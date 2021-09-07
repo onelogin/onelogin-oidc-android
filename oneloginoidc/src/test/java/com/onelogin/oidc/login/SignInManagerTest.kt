@@ -38,6 +38,7 @@ class SignInManagerTest {
         .scopes(listOf("openid"))
         .redirectUrl("redirectTest")
         .clientId("testClientId")
+        .loginHint("testHint")
         .build()
 
     private lateinit var signInManager: SignInManager

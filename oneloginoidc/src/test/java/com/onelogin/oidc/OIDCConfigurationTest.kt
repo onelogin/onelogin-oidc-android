@@ -64,11 +64,13 @@ class OIDCConfigurationTest {
             .clientId("clientId")
             .redirectUrl("redirectUrl")
             .scopes(listOf("openid"))
+            .loginHint("testHint")
             .build()
 
         assertEquals("http://issuer.com", configuration.issuer)
         assertEquals("clientId", configuration.clientId)
         assertEquals("redirectUrl", configuration.redirectUrl)
         assertEquals(listOf("openid"), configuration.scopes)
+        assertEquals("testHint", configuration.loginHint)
     }
 }
