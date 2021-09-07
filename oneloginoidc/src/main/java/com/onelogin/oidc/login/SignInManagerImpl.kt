@@ -87,13 +87,19 @@ internal class SignInManagerImpl(
     private fun getAuthorizationRequest(
         configuration: OIDCConfiguration,
         authConfiguration: AuthorizationServiceConfiguration
-    ) = AuthorizationRequest
-        .Builder(
+    ): AuthorizationRequest {
+
+        val authReqBuilder = AuthorizationRequest.Builder(
             authConfiguration,
             configuration.clientId,
             ResponseTypeValues.CODE,
             Uri.parse(configuration.redirectUrl)
         )
-        .setScope(configuration.scopes.joinToString(" "))
-        .build()
+
+        authReqBuilder.setScope(configuration.scopes.joinToString(" "))
+
+        if (!configuration.loginHint.isNullOrBlank()) authReqBuilder.setLoginHint(configuration.loginHint)
+
+        return authReqBuilder.build()
+    }
 }

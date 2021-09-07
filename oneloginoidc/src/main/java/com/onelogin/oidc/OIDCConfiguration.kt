@@ -7,7 +7,9 @@ class OIDCConfiguration private constructor(
     internal val clientId: String,
     internal val redirectUrl: String,
     internal val scopes: List<String>,
+    internal val loginHint: String?,
     internal val encryptionManager: EncryptionManager?,
+
     internal val debug: Boolean
 ) {
 
@@ -16,6 +18,7 @@ class OIDCConfiguration private constructor(
         private var clientId: String? = null
         private var redirectUrl: String? = null
         private var scopes: List<String> = emptyList()
+        private var loginHint: String? = null
         private var encryptionManager: EncryptionManager? = null
         private var debug: Boolean = false
 
@@ -36,6 +39,11 @@ class OIDCConfiguration private constructor(
 
         fun scopes(scopes: List<String>): Builder {
             this.scopes = scopes
+            return this
+        }
+
+        fun loginHint(hint: String): Builder {
+            this.loginHint = hint
             return this
         }
 
@@ -60,7 +68,7 @@ class OIDCConfiguration private constructor(
                 "redirectUrl is required"
             }
             require(scopes.isNotEmpty()) {
-                "You should add at least the `openid` scope."
+                "You should add at least add the `openid` scope."
             }
             require(scopes.contains("openid")) {
                 "You should add `openid` scope as part of the scopes."
@@ -71,6 +79,7 @@ class OIDCConfiguration private constructor(
                 clientId!!,
                 redirectUrl!!,
                 scopes,
+                loginHint,
                 encryptionManager,
                 debug
             )
