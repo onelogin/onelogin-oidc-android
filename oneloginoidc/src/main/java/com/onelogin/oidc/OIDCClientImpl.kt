@@ -48,13 +48,13 @@ internal class OIDCClientImpl(
 
     override fun signOut(signOutCallback: Callback<SignOutSuccess, SignOutError>) {
         repository.getLatestAuthState().let { state ->
-            state.performActionWithFreshTokens(authorizationService) { accessToken, _, ex ->
+            state.performActionWithFreshTokens(authorizationService) { _, idToken, ex ->
                 if (ex != null) {
                     signOutCallback.onError((SignOutError(ex.message, ex)))
-                } else if (accessToken != null) {
+                } else if (idToken != null) {
                     scope.launch {
                         runCatching {
-                            networkClient.logout(accessToken)
+                            networkClient.logout(idToken)
                             repository.clearAuthState()
                         }.fold(
                             { signOutCallback.onSuccess(SignOutSuccess("Success")) },

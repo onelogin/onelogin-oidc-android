@@ -17,16 +17,16 @@ internal class NetworkClient(
 ) {
 
     suspend fun logout(token: String) = withContext(Dispatchers.IO) {
+        val url = "${configuration.issuer}${EndpointsContract.LOGOUT_PATH}?id_token_hint=$token"
+
         val request = Request.Builder()
-            .url(configuration.issuer + EndpointsContract.LOGOUT_PATH)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .header("Authorization", "Bearer $token")
+            .url(url)
             .build()
 
         val response = okHttpClient.newCall(request).execute()
 
         response.use {
-            if (response.isSuccessful) {
+            if (response.code == 302) {
                 return@withContext
             }
             response.body?.let {
