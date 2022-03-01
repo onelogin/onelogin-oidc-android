@@ -45,6 +45,16 @@ class NetworkClientTest {
 
     @Test
     @TestRail
+    fun logoutRequestIsFormedCorrectly() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200))
+        client.logout("token")
+        val request = server.takeRequest()
+
+        assertTrue(request.requestUrl.toString().endsWith("oidc/2/logout"))
+    }
+
+    @Test
+    @TestRail
     fun revokeTokenRequestIsFormedCorrectly() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(200))
         client.revokeToken("token")

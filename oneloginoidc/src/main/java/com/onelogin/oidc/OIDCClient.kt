@@ -5,6 +5,8 @@ import com.onelogin.oidc.introspect.IntrospectionError
 import com.onelogin.oidc.introspect.TokenIntrospection
 import com.onelogin.oidc.login.SignInError
 import com.onelogin.oidc.login.SignInSuccess
+import com.onelogin.oidc.logout.SignOutError
+import com.onelogin.oidc.logout.SignOutSuccess
 import com.onelogin.oidc.refresh.RefreshError
 import com.onelogin.oidc.refresh.RefreshSuccess
 import com.onelogin.oidc.revoke.RevokeError
@@ -24,6 +26,13 @@ interface OIDCClient {
      * {@link com.onelogin.oidc.session.SessionInfo} will be returned with the appropriate status of the session and the tokens
      */
     fun signIn(activity: Activity, signInCallback: Callback<SignInSuccess, SignInError>)
+
+    /**
+     * Call this method in order to execute the sign out process, which sign the user out.
+     *
+     * @param signOutCallback Callback to receive the status of the signOut process.
+     */
+    fun signOut(signOutCallback: Callback<SignOutSuccess, SignOutError>)
 
     /**
      * Call this method in order to invalidate a previous session and all the tokens related to this,

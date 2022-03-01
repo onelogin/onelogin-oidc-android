@@ -11,6 +11,8 @@ import com.onelogin.oidc.introspect.TokenIntrospection
 import com.onelogin.oidc.login.SignInError
 import com.onelogin.oidc.login.SignInManager
 import com.onelogin.oidc.login.SignInSuccess
+import com.onelogin.oidc.logout.SignOutError
+import com.onelogin.oidc.logout.SignOutSuccess
 import com.onelogin.oidc.refresh.RefreshError
 import com.onelogin.oidc.refresh.RefreshSuccess
 import com.onelogin.oidc.revoke.RevokeError
@@ -41,6 +43,26 @@ internal class OIDCClientImpl(
         activityScope.coroutineContext.cancelChildren()
         activityScope.launch {
             signInManager.signIn(activity, signInCallback)
+        }
+    }
+
+    override fun signOut(signOutCallback: Callback<SignOutSuccess, SignOutError>) {
+        repository.getLatestAuthState().let { state ->
+            state.performActionWithFreshTokens(authorizationService) { accessToken, _, ex ->
+                if (ex != null) {
+                    signOutCallback.onError((SignOutError(ex.message, ex)))
+                } else if (accessToken != null) {
+                    scope.launch {
+                        runCatching {
+                            networkClient.logout(accessToken)
+                            repository.clearAuthState()
+                        }.fold(
+                            { signOutCallback.onSuccess(SignOutSuccess("Success")) },
+                            { signOutCallback.onError(SignOutError(it.message, it)) }
+                        )
+                    }
+                }
+            }
         }
     }
 
