@@ -16,12 +16,12 @@ class SignOutFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        val authorizationRequestString = arguments?.getString(ARG_AUTHORIZATION_REQUEST)
+        val authorizationRequestString = arguments?.getString(ARG_END_SESSION_REQUEST)
         val authorizationRequest = authorizationRequestString?.let { EndSessionRequest.jsonDeserialize(authorizationRequestString) }
         authorizationRequest?.let {
             val authIntent = AuthorizationServiceProvider.authorizationService.getEndSessionRequestIntent(it)
             startActivityForResult(authIntent, END_SESSION_REQUEST_CODE)
-            arguments?.putString(ARG_AUTHORIZATION_REQUEST, null)
+            arguments?.putString(ARG_END_SESSION_REQUEST, null)
         }
     }
 
@@ -48,7 +48,7 @@ class SignOutFragment : Fragment() {
 
     companion object {
         internal const val END_SESSION_REQUEST_CODE = 34001
-        internal const val ARG_AUTHORIZATION_REQUEST = "authorization_request"
+        internal const val ARG_END_SESSION_REQUEST = "end_session_request"
         internal const val LOGOUT_FRAGMENT_TAG = "logout_fragment"
     }
 }

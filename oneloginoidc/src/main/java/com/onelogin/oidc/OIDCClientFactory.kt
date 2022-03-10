@@ -14,6 +14,7 @@ import com.onelogin.oidc.login.SignInFragment
 import com.onelogin.oidc.login.SignInFragment.Companion.ARG_AUTHORIZATION_REQUEST
 import com.onelogin.oidc.login.SignInManagerImpl
 import com.onelogin.oidc.logout.SignOutFragment
+import com.onelogin.oidc.logout.SignOutFragment.Companion.ARG_END_SESSION_REQUEST
 import com.onelogin.oidc.logout.SignOutManagerImpl
 
 internal class OIDCClientFactory(
@@ -51,7 +52,7 @@ internal class OIDCClientFactory(
         ) { endSessionRequest ->
             val fragment = SignOutFragment()
             val args = Bundle()
-            args.putString(ARG_AUTHORIZATION_REQUEST, endSessionRequest.jsonSerializeString())
+            args.putString(ARG_END_SESSION_REQUEST, endSessionRequest.jsonSerializeString())
             fragment.arguments = args
             fragment
         }
