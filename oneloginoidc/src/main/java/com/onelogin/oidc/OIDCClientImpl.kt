@@ -12,6 +12,7 @@ import com.onelogin.oidc.login.SignInError
 import com.onelogin.oidc.login.SignInManager
 import com.onelogin.oidc.login.SignInSuccess
 import com.onelogin.oidc.logout.SignOutError
+import com.onelogin.oidc.logout.SignOutManager
 import com.onelogin.oidc.logout.SignOutSuccess
 import com.onelogin.oidc.refresh.RefreshError
 import com.onelogin.oidc.refresh.RefreshSuccess
@@ -31,7 +32,8 @@ internal class OIDCClientImpl(
     private val authorizationService: AuthorizationService,
     private val networkClient: NetworkClient,
     private val repository: OIDCRepository,
-    private val signInManager: SignInManager
+    private val signInManager: SignInManager,
+    private val signOutManager: SignOutManager
 ) : OIDCClient {
 
     private var currentActivity: WeakReference<Activity>? = null
@@ -46,20 +48,16 @@ internal class OIDCClientImpl(
         }
     }
 
-    override fun signOut(signOutCallback: Callback<SignOutSuccess, SignOutError>) {
+    override fun signOut(activity: Activity, signOutCallback: Callback<SignOutSuccess, SignOutError>) {
         repository.getLatestAuthState().let { state ->
             state.performActionWithFreshTokens(authorizationService) { _, idToken, ex ->
                 if (ex != null) {
                     signOutCallback.onError((SignOutError(ex.message, ex)))
                 } else if (idToken != null) {
-                    scope.launch {
-                        runCatching {
-                            networkClient.logout(idToken)
-                            repository.clearAuthState()
-                        }.fold(
-                            { signOutCallback.onSuccess(SignOutSuccess("Success")) },
-                            { signOutCallback.onError(SignOutError(it.message, it)) }
-                        )
+                    listenActivityLifecycle(activity)
+                    activityScope.coroutineContext.cancelChildren()
+                    activityScope.launch {
+                        signOutManager.singOut(idToken, activity, signOutCallback)
                     }
                 }
             }

@@ -30,9 +30,10 @@ interface OIDCClient {
     /**
      * Call this method in order to execute the sign out process, which sign the user out.
      *
+     * @param activity Activity that will own the sign out process, process will be attached to its lifecycle
      * @param signOutCallback Callback to receive the status of the signOut process.
      */
-    fun signOut(signOutCallback: Callback<SignOutSuccess, SignOutError>)
+    fun signOut(activity: Activity, signOutCallback: Callback<SignOutSuccess, SignOutError>)
 
     /**
      * Call this method in order to invalidate a previous session and all the tokens related to this,

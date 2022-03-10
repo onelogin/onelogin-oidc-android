@@ -16,26 +16,6 @@ internal class NetworkClient(
     private val configuration: OIDCConfiguration
 ) {
 
-    suspend fun logout(token: String) = withContext(Dispatchers.IO) {
-        val url = "${configuration.issuer}${EndpointsContract.LOGOUT_PATH}?id_token_hint=$token"
-
-        val request = Request.Builder()
-            .url(url)
-            .build()
-
-        val response = okHttpClient.newCall(request).execute()
-
-        response.use {
-            if (response.code == 302) {
-                return@withContext
-            }
-            response.body?.let {
-                val error = Gson().fromJson(it.string(), ErrorResponse::class.java)
-                throw NetworkException(error.errorDescription)
-            } ?: throw NetworkException("Unable to sign out token")
-        }
-    }
-
     suspend fun revokeToken(token: String) = withContext(Dispatchers.IO) {
         val requestBody = FormBody.Builder()
             .add("token", token)
