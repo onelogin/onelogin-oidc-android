@@ -68,7 +68,7 @@ internal class SignOutManagerImpl(
 
         val endSessionReqBuilder = EndSessionRequest.Builder(authConfiguration)
             .setIdTokenHint(idToken)
-            .setPostLogoutRedirectUri(Uri.parse("https://${issuerUrl.host}/logout"))
+            .setPostLogoutRedirectUri(Uri.parse(configuration.redirectUrl))
 
         return endSessionReqBuilder.build()
     }
