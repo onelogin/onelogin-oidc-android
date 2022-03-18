@@ -57,7 +57,7 @@ internal class OIDCClientImpl(
                     listenActivityLifecycle(activity)
                     activityScope.coroutineContext.cancelChildren()
                     activityScope.launch {
-                        signOutManager.singOut(idToken, activity, signOutCallback)
+                        signOutManager.signOut(idToken, activity, signOutCallback)
                     }
                 }
             }

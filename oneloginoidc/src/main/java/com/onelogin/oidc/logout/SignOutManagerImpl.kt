@@ -16,7 +16,7 @@ internal class SignOutManagerImpl(
     private val signOutFragmentProvider: (EndSessionRequest) -> SignOutFragment
 ) : SignOutManager {
 
-    override suspend fun singOut(
+    override suspend fun signOut(
         idToken: String,
         activity: Activity,
         signOutCallback: Callback<SignOutSuccess, SignOutError>
