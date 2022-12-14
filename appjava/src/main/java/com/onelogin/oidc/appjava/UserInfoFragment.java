@@ -1,5 +1,6 @@
 package com.onelogin.oidc.appjava;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,6 +21,10 @@ import com.onelogin.oidc.userInfo.UserInfoError;
 
 import static com.onelogin.oidc.appjava.OIDCDemoApp.LOG_TAG;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class UserInfoFragment extends Fragment {
 
     private TextView userId;
@@ -27,6 +32,7 @@ public class UserInfoFragment extends Fragment {
     private TextView preferredName;
     private TextView updatedAt;
     private ViewAnimator animator;
+    private final SimpleDateFormat format = new SimpleDateFormat("EEE, MMM d, ''yy", Locale.getDefault());
 
     @Nullable
     @Override
@@ -45,12 +51,18 @@ public class UserInfoFragment extends Fragment {
 
         animator.setDisplayedChild(0);
         OneLoginOIDC.getClient().getUserInfo(new Callback<UserInfo, UserInfoError>() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onSuccess(UserInfo userInfo) {
                 userId.setText(userInfo.getSub());
                 email.setText(userInfo.getEmail());
                 preferredName.setText(userInfo.getPreferredUsername() != null ? userInfo.getPreferredUsername() : "Empty");
-                updatedAt.setText(userInfo.getUpdatedAt() != null ? userInfo.getUpdatedAt() : "Empty");
+                if (userInfo.getUpdatedAt() != null) {
+                    updatedAt.setText(format.format(new Date(userInfo.getUpdatedAt() * 1000)));
+                } else {
+                    updatedAt.setText("Empty");
+                }
+
                 animator.setDisplayedChild(1);
             }
 
