@@ -13,6 +13,8 @@ import com.onelogin.oidc.Callback
 import com.onelogin.oidc.OneLoginOIDC.getClient
 import com.onelogin.oidc.userInfo.UserInfo
 import com.onelogin.oidc.userInfo.UserInfoError
+import java.text.SimpleDateFormat
+import java.util.*
 
 class UserInfoFragment : Fragment() {
 
@@ -21,6 +23,7 @@ class UserInfoFragment : Fragment() {
     private val preferredName: TextView by lazy { requireView().findViewById<TextView>(R.id.username) }
     private val updatedAt: TextView by lazy { requireView().findViewById<TextView>(R.id.updated_at) }
     private val animator: ViewAnimator by lazy { requireView() as ViewAnimator }
+    private val format = SimpleDateFormat("EEE, MMM d, ''yy", Locale.getDefault())
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,7 +46,12 @@ class UserInfoFragment : Fragment() {
                     email.text = success.email
                     preferredName.text =
                         if (success.preferredUsername != null) success.preferredUsername else "Empty"
-                    updatedAt.text = if (success.updatedAt != null) success.updatedAt else "Empty"
+                    val lastUpdateTimestamp = success.updatedAt
+                    updatedAt.text = if (lastUpdateTimestamp != null) {
+                        format.format(Date(lastUpdateTimestamp * 1000))
+                    } else {
+                        "Empty"
+                    }
                     animator.displayedChild = 1
                 }
 
