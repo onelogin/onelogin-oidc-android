@@ -54,6 +54,7 @@ OIDCConfiguration.Builder()
     .scopes(listOf("openid"))
     .isDebug(true)
     .loginHint("test@email.com")
+    .state("custom-state-value")
     .build()
 ```
 
@@ -66,6 +67,7 @@ The supported parameters of the configuration are:
 | redirectUrl   | Redirect Url specified in the OneLogin Application                                                                  | Required |
 | scopes        | List of scopes of the authorization token, it should include `openid`                                               | Required |
 | loginHint     | A string hint to the Authorization Server about the login identifier the End-User might use to log in               | Optional |
+| state         | An opaque value used to maintain state between the request and callback to prevent CSRF attacks. If not provided, the library will auto-generate one | Optional |
 | isDebug       | Specifies if the instance of the library should be initialized in debug mode, which will log additional information | Optional |
 
 

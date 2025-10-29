@@ -100,6 +100,8 @@ internal class SignInManagerImpl(
 
         if (!configuration.loginHint.isNullOrBlank()) authReqBuilder.setLoginHint(configuration.loginHint)
 
+        if (!configuration.state.isNullOrBlank()) authReqBuilder.setState(configuration.state)
+
         return authReqBuilder.build()
     }
 }

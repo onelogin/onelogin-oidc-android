@@ -186,4 +186,44 @@ class SignInManagerTest {
         verify { authorizationService.performTokenRequest(any(), any()) }
         verify { callback.onError(any()) }
     }
+
+    @Test
+    @TestRail
+    fun signInUsesCustomStateWhenProvided() = runBlocking {
+        val customState = "custom-state-value"
+        val configWithState = OIDCConfiguration.Builder()
+            .issuer("testIssuer")
+            .scopes(listOf("openid"))
+            .redirectUrl("redirectTest")
+            .clientId("testClientId")
+            .state(customState)
+            .build()
+
+        val signInManagerWithState = SignInManagerImpl(
+            configWithState,
+            authorizationService,
+            repository
+        ) { authRequest ->
+            // Verify the authorization request contains the custom state
+            assert(authRequest.state == customState) { "Expected state to be $customState but was ${authRequest.state}" }
+            signInFragment
+        }
+
+        val serviceCallbackSlot = slot<AuthorizationService.TokenResponseCallback>()
+        every { signInFragment.resultChannel }.returns(produce<Pair<AuthorizationResponse?, AuthorizationException?>> {
+            send(spyResponse to null)
+        } as Channel)
+        every {
+            authorizationService.performTokenRequest(
+                any(),
+                capture(serviceCallbackSlot)
+            )
+        } answers {
+            serviceCallbackSlot.captured.onTokenRequestCompleted(mockk(), null)
+        }
+
+        signInManagerWithState.signIn(activity, callback)
+
+        verify { callback.onSuccess(any()) }
+    }
 }
