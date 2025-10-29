@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.runBlocking
 import net.openid.appauth.*
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -205,7 +206,7 @@ class SignInManagerTest {
             repository
         ) { authRequest ->
             // Verify the authorization request contains the custom state
-            assert(authRequest.state == customState) { "Expected state to be $customState but was ${authRequest.state}" }
+            assertEquals("Expected state to match custom state", customState, authRequest.state)
             signInFragment
         }
 
