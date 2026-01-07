@@ -8,6 +8,7 @@ To get more info about how to configure an app for OIDC visit the [Overview of O
 
 <!-- TOC depthFrom:2 depthTo:3 -->
 
+- [Support](#support)
 - [Installation](#installation)
 - [Configuration](#configuration)
   - [Configure a OneLogin application](#configure-a-onelogin-application)
@@ -22,6 +23,11 @@ To get more info about how to configure an app for OIDC visit the [Overview of O
   - [getUserInfo](#getuserinfo)
   - [cancel](#cancel)
 - [Running Demo Apps](#running-demo-apps)
+
+
+## Support
+
+OneLogin by One Identity open source projects are supported through [OneLogin GitHub issues](https://github.com/onelogin/onelogin-oidc-android/issues). This includes all scripts, plugins, SDKs, modules, code snippets or other solutions. For assistance with any OneLogin by One Identity GitHub project, please raise a new Issue on the [OneLogin GitHub issues](https://github.com/onelogin/onelogin-oidc-android/issues) page. Requests for assistance made through official One Identity Support will be referred back to GitHub where those requests can benefit all users.
 
 ## Installation
 
