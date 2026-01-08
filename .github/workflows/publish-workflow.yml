@@ -33,14 +33,22 @@ jobs:
           echo "$GPG_KEY_CONTENTS" | base64 -d > /tmp/secring.gpg
           gpg --batch --import /tmp/secring.gpg
 
-      - name: Build Release
-        run: ./gradlew oneloginoidc:assembleRelease
+      - name: Build all artifacts
+        run: |
+          ./gradlew oneloginoidc:assembleRelease
+          ./gradlew oneloginoidc:androidSourcesJar oneloginoidc:javadocJar
+          ./gradlew oneloginoidc:generatePomFileForReleasePublication
 
-      - name: Build Source Jar and Javadoc
-        run: ./gradlew androidSourcesJar javadocJar
-
-      - name: Generate POM
-        run: ./gradlew generatePomFileForReleasePublication
+      - name: Debug - List build outputs
+        run: |
+          echo "=== AAR files ==="
+          find . -name "*.aar" -type f
+          echo "=== JAR files in oneloginoidc ==="
+          find oneloginoidc -name "*.jar" -type f
+          echo "=== Publications ==="
+          find . -path "*/publications/*" -type f
+          echo "=== Full libs directory ==="
+          ls -la oneloginoidc/build/libs/ || echo "libs dir not found"
 
       - name: Create bundle for Central Portal
         env:
@@ -56,16 +64,37 @@ jobs:
           echo "Creating bundle for version ${VERSION}"
           mkdir -p "${BUNDLE_DIR}"
 
-          # Copy artifacts with correct names
+          # Copy AAR
           cp oneloginoidc/build/outputs/aar/oneloginoidc-release.aar "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}.aar"
-          cp oneloginoidc/build/libs/oneloginoidc-sources.jar "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}-sources.jar"
-          cp oneloginoidc/build/libs/oneloginoidc-javadoc.jar "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}-javadoc.jar"
+
+          # Find and copy sources jar (might have different naming)
+          SOURCES_JAR=$(find oneloginoidc/build -name "*-sources.jar" -o -name "*sources*.jar" | head -1)
+          if [ -z "$SOURCES_JAR" ]; then
+            echo "ERROR: Sources JAR not found"
+            find oneloginoidc/build -name "*.jar"
+            exit 1
+          fi
+          echo "Found sources jar: $SOURCES_JAR"
+          cp "$SOURCES_JAR" "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}-sources.jar"
+
+          # Find and copy javadoc jar
+          JAVADOC_JAR=$(find oneloginoidc/build -name "*-javadoc.jar" -o -name "*javadoc*.jar" | head -1)
+          if [ -z "$JAVADOC_JAR" ]; then
+            echo "ERROR: Javadoc JAR not found"
+            find oneloginoidc/build -name "*.jar"
+            exit 1
+          fi
+          echo "Found javadoc jar: $JAVADOC_JAR"
+          cp "$JAVADOC_JAR" "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}-javadoc.jar"
+
+          # Copy POM
           cp oneloginoidc/build/publications/release/pom-default.xml "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}.pom"
 
           cd "${BUNDLE_DIR}"
 
           # Sign all artifacts
           for file in *.aar *.jar *.pom; do
+            echo "Signing $file"
             echo "${SIGNING_PASSWORD}" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback \
               -u "${SIGNING_KEY_ID}" --armor --detach-sign "$file"
           done
