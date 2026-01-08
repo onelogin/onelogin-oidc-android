@@ -111,10 +111,11 @@ jobs:
           echo "Bundle contents:"
           ls -la
 
-          # Create the bundle zip
-          cd ../../../..
+          # Create the bundle zip (go back to repo root)
+          cd "$GITHUB_WORKSPACE"
           zip -r bundle.zip bundle/
           echo "Bundle created: bundle.zip"
+          ls -la bundle.zip
 
       - name: Upload to Maven Central
         env:
