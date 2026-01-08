@@ -10,12 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: set up JDK 1.8
-        uses: actions/setup-java@v1
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          java-version: 1.8
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Retrieve AWS Secrets - Common Android
         uses: say8425/aws-secrets-manager-actions@v2
@@ -25,28 +26,112 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
           SECRET_NAME: common/gh-actions/android
 
-        # Base64 decodes and pipes the GPG key content into the secret file
-      - name: Prepare environment
+      - name: Prepare GPG key
         env:
           GPG_KEY_CONTENTS: ${{ env.GPG_KEY_CONTENTS }}
-          SIGNING_SECRET_KEY_RING_FILE: ${{ env.SIGNING_SECRET_KEY_RING_FILE }}
         run: |
-          git fetch --unshallow
-          sudo bash -c "echo '$GPG_KEY_CONTENTS' | base64 -d > '$SIGNING_SECRET_KEY_RING_FILE'"
+          echo "$GPG_KEY_CONTENTS" | base64 -d > /tmp/secring.gpg
+          gpg --batch --import /tmp/secring.gpg
 
       - name: Build Release
         run: ./gradlew oneloginoidc:assembleRelease
 
-      - name: Source Jar and dokka
+      - name: Build Source Jar and Javadoc
         run: ./gradlew androidSourcesJar javadocJar
 
-        # Runs upload, and then closes & releases the repository
-      - name: Publish to MavenCentral
-        run: ./gradlew publishReleasePublicationToSonatypeRepository --max-workers 1 closeAndReleaseSonatypeStagingRepository
+      - name: Generate POM
+        run: ./gradlew generatePomFileForReleasePublication
+
+      - name: Create bundle for Central Portal
         env:
-          OSSRH_USERNAME: ${{ env.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ env.OSSRH_PASSWORD }}
           SIGNING_KEY_ID: ${{ env.SIGNING_KEY_ID }}
           SIGNING_PASSWORD: ${{ env.SIGNING_PASSWORD }}
-          SIGNING_SECRET_KEY_RING_FILE: ${{ env.SIGNING_SECRET_KEY_RING_FILE }}
-          SONATYPE_STAGING_PROFILE_ID: ${{ env.SONATYPE_STAGING_PROFILE_ID }}
+        run: |
+          # Get version from build.gradle
+          VERSION=$(grep -oP 'versionName "\K[^"]+' oneloginoidc/build.gradle)
+          GROUP_PATH="com/onelogin"
+          ARTIFACT_ID="onelogin-oidc-android-sdk"
+          BUNDLE_DIR="bundle/${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}"
+
+          echo "Creating bundle for version ${VERSION}"
+          mkdir -p "${BUNDLE_DIR}"
+
+          # Copy artifacts with correct names
+          cp oneloginoidc/build/outputs/aar/oneloginoidc-release.aar "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}.aar"
+          cp oneloginoidc/build/libs/oneloginoidc-sources.jar "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}-sources.jar"
+          cp oneloginoidc/build/libs/oneloginoidc-javadoc.jar "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}-javadoc.jar"
+          cp oneloginoidc/build/publications/release/pom-default.xml "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}.pom"
+
+          cd "${BUNDLE_DIR}"
+
+          # Sign all artifacts
+          for file in *.aar *.jar *.pom; do
+            echo "${SIGNING_PASSWORD}" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback \
+              -u "${SIGNING_KEY_ID}" --armor --detach-sign "$file"
+          done
+
+          # Generate checksums for all files (including signatures)
+          for file in *.aar *.jar *.pom *.asc; do
+            md5sum "$file" | cut -d' ' -f1 > "${file}.md5"
+            sha1sum "$file" | cut -d' ' -f1 > "${file}.sha1"
+            sha256sum "$file" | cut -d' ' -f1 > "${file}.sha256"
+            sha512sum "$file" | cut -d' ' -f1 > "${file}.sha512"
+          done
+
+          # List bundle contents
+          echo "Bundle contents:"
+          ls -la
+
+          # Create the bundle zip
+          cd ../../../..
+          zip -r bundle.zip bundle/
+          echo "Bundle created: bundle.zip"
+
+      - name: Upload to Maven Central
+        env:
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_SONATYPE_TOKEN }}
+        run: |
+          echo "Uploading bundle to Maven Central..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "https://central.sonatype.com/api/v1/publisher/upload?publishingType=AUTOMATIC" \
+            -H "Authorization: Bearer ${CENTRAL_TOKEN}" \
+            -F "bundle=@bundle.zip")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response code: ${HTTP_CODE}"
+          echo "Response body: ${BODY}"
+
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "Upload failed with status ${HTTP_CODE}"
+            exit 1
+          fi
+
+          DEPLOYMENT_ID="${BODY}"
+          echo "Deployment ID: ${DEPLOYMENT_ID}"
+
+          # Poll for status
+          echo "Waiting for deployment to complete..."
+          for i in {1..30}; do
+            sleep 10
+            STATUS_RESPONSE=$(curl -s \
+              -H "Authorization: Bearer ${CENTRAL_TOKEN}" \
+              "https://central.sonatype.com/api/v1/publisher/status?id=${DEPLOYMENT_ID}")
+
+            echo "Status check ${i}: ${STATUS_RESPONSE}"
+
+            STATE=$(echo "$STATUS_RESPONSE" | grep -oP '"deploymentState"\s*:\s*"\K[^"]+' || echo "UNKNOWN")
+
+            if [ "$STATE" = "PUBLISHED" ]; then
+              echo "Successfully published to Maven Central!"
+              exit 0
+            elif [ "$STATE" = "FAILED" ]; then
+              echo "Deployment failed!"
+              exit 1
+            fi
+          done
+
+          echo "Timeout waiting for deployment. Final state: ${STATE}"
+          echo "Check https://central.sonatype.com for deployment status"
