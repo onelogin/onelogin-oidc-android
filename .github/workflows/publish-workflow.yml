@@ -9,13 +9,159 @@ jobs:
   publish-library:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: set up JDK 1.8
-        uses: actions/setup-java@v1
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
         with:
-          java-version: 1.8
-      - name: Publish to bintray
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Retrieve AWS Secrets - Common Android
+        uses: say8425/aws-secrets-manager-actions@v2
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          SECRET_NAME: common/gh-actions/android
+
+      - name: Prepare GPG key
         env:
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER}}
-          BINTRAY_API_KEY: ${{ secrets.BINTRAY_API_KEY}}
-        run: ./gradlew install bintrayUpload
+          GPG_KEY_CONTENTS: ${{ env.GPG_KEY_CONTENTS }}
+        run: |
+          echo "$GPG_KEY_CONTENTS" | base64 -d > /tmp/secring.gpg
+          gpg --batch --import /tmp/secring.gpg
+
+      - name: Build all artifacts
+        run: |
+          ./gradlew oneloginoidc:assembleRelease
+          ./gradlew oneloginoidc:androidSourcesJar oneloginoidc:javadocJar
+          ./gradlew oneloginoidc:generatePomFileForReleasePublication
+
+      - name: Debug - List build outputs
+        run: |
+          echo "=== AAR files ==="
+          find . -name "*.aar" -type f
+          echo "=== JAR files in oneloginoidc ==="
+          find oneloginoidc -name "*.jar" -type f
+          echo "=== Publications ==="
+          find . -path "*/publications/*" -type f
+          echo "=== Full libs directory ==="
+          ls -la oneloginoidc/build/libs/ || echo "libs dir not found"
+
+      - name: Create bundle for Central Portal
+        env:
+          SIGNING_KEY_ID: ${{ env.SIGNING_KEY_ID }}
+          SIGNING_PASSWORD: ${{ env.SIGNING_PASSWORD }}
+        run: |
+          # Get version from build.gradle
+          VERSION=$(grep -oP 'versionName "\K[^"]+' oneloginoidc/build.gradle)
+          GROUP_PATH="com/onelogin"
+          ARTIFACT_ID="onelogin-oidc-android-sdk"
+          BUNDLE_DIR="bundle/${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}"
+
+          echo "Creating bundle for version ${VERSION}"
+          mkdir -p "${BUNDLE_DIR}"
+
+          # Copy AAR
+          cp oneloginoidc/build/outputs/aar/oneloginoidc-release.aar "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}.aar"
+
+          # Find and copy sources jar (might have different naming)
+          SOURCES_JAR=$(find oneloginoidc/build -name "*-sources.jar" -o -name "*sources*.jar" | head -1)
+          if [ -z "$SOURCES_JAR" ]; then
+            echo "ERROR: Sources JAR not found"
+            find oneloginoidc/build -name "*.jar"
+            exit 1
+          fi
+          echo "Found sources jar: $SOURCES_JAR"
+          cp "$SOURCES_JAR" "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}-sources.jar"
+
+          # Find and copy javadoc jar
+          JAVADOC_JAR=$(find oneloginoidc/build -name "*-javadoc.jar" -o -name "*javadoc*.jar" | head -1)
+          if [ -z "$JAVADOC_JAR" ]; then
+            echo "ERROR: Javadoc JAR not found"
+            find oneloginoidc/build -name "*.jar"
+            exit 1
+          fi
+          echo "Found javadoc jar: $JAVADOC_JAR"
+          cp "$JAVADOC_JAR" "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}-javadoc.jar"
+
+          # Copy POM
+          cp oneloginoidc/build/publications/release/pom-default.xml "${BUNDLE_DIR}/${ARTIFACT_ID}-${VERSION}.pom"
+
+          cd "${BUNDLE_DIR}"
+
+          # Sign all artifacts
+          for file in *.aar *.jar *.pom; do
+            echo "Signing $file"
+            echo "${SIGNING_PASSWORD}" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback \
+              -u "${SIGNING_KEY_ID}" --armor --detach-sign "$file"
+          done
+
+          # Generate checksums for all files (including signatures)
+          for file in *.aar *.jar *.pom *.asc; do
+            md5sum "$file" | cut -d' ' -f1 > "${file}.md5"
+            sha1sum "$file" | cut -d' ' -f1 > "${file}.sha1"
+            sha256sum "$file" | cut -d' ' -f1 > "${file}.sha256"
+            sha512sum "$file" | cut -d' ' -f1 > "${file}.sha512"
+          done
+
+          # List bundle contents
+          echo "Bundle contents:"
+          ls -la
+
+          # Create the bundle zip (go back to repo root)
+          cd "$GITHUB_WORKSPACE"
+          zip -r bundle.zip bundle/
+          echo "Bundle created: bundle.zip"
+          ls -la bundle.zip
+
+      - name: Upload to Maven Central
+        env:
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+        run: |
+          echo "Uploading bundle to Maven Central..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "https://central.sonatype.com/api/v1/publisher/upload?publishingType=AUTOMATIC" \
+            -H "Authorization: Bearer ${CENTRAL_TOKEN}" \
+            -F "bundle=@bundle.zip")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response code: ${HTTP_CODE}"
+          echo "Response body: ${BODY}"
+
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "Upload failed with status ${HTTP_CODE}"
+            exit 1
+          fi
+
+          DEPLOYMENT_ID="${BODY}"
+          echo "Deployment ID: ${DEPLOYMENT_ID}"
+
+          # Poll for status
+          echo "Waiting for deployment to complete..."
+          for i in {1..30}; do
+            sleep 10
+            STATUS_RESPONSE=$(curl -s \
+              -H "Authorization: Bearer ${CENTRAL_TOKEN}" \
+              "https://central.sonatype.com/api/v1/publisher/status?id=${DEPLOYMENT_ID}")
+
+            echo "Status check ${i}: ${STATUS_RESPONSE}"
+
+            STATE=$(echo "$STATUS_RESPONSE" | grep -oP '"deploymentState"\s*:\s*"\K[^"]+' || echo "UNKNOWN")
+
+            if [ "$STATE" = "PUBLISHED" ]; then
+              echo "Successfully published to Maven Central!"
+              exit 0
+            elif [ "$STATE" = "FAILED" ]; then
+              echo "Deployment failed!"
+              exit 1
+            fi
+          done
+
+          echo "Timeout waiting for deployment. Final state: ${STATE}"
+          echo "Check https://central.sonatype.com for deployment status"

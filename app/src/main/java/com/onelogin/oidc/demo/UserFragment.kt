@@ -10,6 +10,8 @@ import androidx.navigation.Navigation
 import com.google.android.material.snackbar.Snackbar
 import com.onelogin.oidc.Callback
 import com.onelogin.oidc.OneLoginOIDC
+import com.onelogin.oidc.logout.SignOutError
+import com.onelogin.oidc.logout.SignOutSuccess
 import com.onelogin.oidc.refresh.RefreshError
 import com.onelogin.oidc.refresh.RefreshSuccess
 import com.onelogin.oidc.revoke.RevokeError
@@ -56,8 +58,8 @@ class UserFragment : Fragment(),
     }
 
     private fun logout() {
-        oidcClient.revokeToken(object : Callback<RevokeSuccess, RevokeError> {
-            override fun onSuccess(success: RevokeSuccess) {
+        oidcClient.signOut(requireActivity(), object : Callback<SignOutSuccess, SignOutError> {
+            override fun onSuccess(success: SignOutSuccess) {
                 val action = UserFragmentDirections.actionUserFragmentToSignInFragment()
                 Navigation.findNavController(requireView()).navigate(action)
                 Snackbar.make(
@@ -67,7 +69,7 @@ class UserFragment : Fragment(),
                 ).show()
             }
 
-            override fun onError(error: RevokeError) {
+            override fun onError(error: SignOutError) {
                 Snackbar.make(
                     requireView(),
                     getString(R.string.error_logging_out, error.message),

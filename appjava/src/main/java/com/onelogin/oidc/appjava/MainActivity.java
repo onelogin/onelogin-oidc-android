@@ -1,20 +1,17 @@
 package com.onelogin.oidc.appjava;
 
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
+import android.os.*;
+import android.util.*;
+import android.view.*;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.navigation.NavDirections;
-import androidx.navigation.Navigation;
+import androidx.appcompat.app.*;
+import androidx.navigation.*;
 
-import com.google.android.material.snackbar.Snackbar;
-import com.onelogin.oidc.OIDCClient;
-import com.onelogin.oidc.OneLoginOIDC;
-import com.onelogin.oidc.session.SessionInfo;
-import com.onelogin.oidc.session.SessionInfoError;
+import com.google.android.material.snackbar.*;
+import com.onelogin.oidc.*;
+import com.onelogin.oidc.session.*;
 
-import static com.onelogin.oidc.appjava.OIDCDemoApp.LOG_TAG;
+import static com.onelogin.oidc.appjava.OIDCDemoApp.*;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -45,7 +42,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showUserScreen() {
-        NavDirections action = SignInFragmentDirections.actionSignInFragmentToUserFragment();
-        Navigation.findNavController(this, R.id.nav_host_fragment).navigate(action);
+        if(getNavController().getCurrentDestination().getId() == R.id.signInFragment) {
+            NavDirections action = SignInFragmentDirections.actionSignInFragmentToUserFragment();
+            getNavController().navigate(action);
+        }
+    }
+
+    private NavController getNavController () {
+        return Navigation.findNavController(this, R.id.nav_host_fragment);
     }
 }

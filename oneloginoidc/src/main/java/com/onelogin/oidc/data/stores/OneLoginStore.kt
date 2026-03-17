@@ -6,7 +6,6 @@ class OneLoginStore(
     private val preferences: SharedPreferences
 ) : Store {
 
-
     override fun persist(key: String, data: String): Boolean = with(preferences.edit()) {
         putString(key, data)
         commit()

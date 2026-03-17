@@ -38,7 +38,7 @@ internal class NetworkClient(
             response.body?.let {
                 val error = Gson().fromJson(it.string(), ErrorResponse::class.java)
                 throw NetworkException(error.errorDescription)
-            } ?: throw  NetworkException("Unable to revoke token")
+            } ?: throw NetworkException("Unable to revoke token")
         }
     }
 
@@ -90,5 +90,4 @@ internal class NetworkClient(
 
     internal class NetworkException(message: String?, cause: Exception? = null) :
         Exception(message, cause)
-
 }
