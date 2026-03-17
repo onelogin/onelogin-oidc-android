@@ -14,5 +14,4 @@ object AuthorizationServiceProvider {
     fun init(context: Context) {
         this.context = context
     }
-
 }

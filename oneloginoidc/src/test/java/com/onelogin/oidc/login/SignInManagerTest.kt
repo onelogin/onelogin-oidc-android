@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.runBlocking
 import net.openid.appauth.*
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,6 +39,7 @@ class SignInManagerTest {
         .scopes(listOf("openid"))
         .redirectUrl("redirectTest")
         .clientId("testClientId")
+        .loginHint("testHint")
         .build()
 
     private lateinit var signInManager: SignInManager
@@ -174,7 +176,10 @@ class SignInManagerTest {
                 capture(serviceCallbackSlot)
             )
         } answers {
-            serviceCallbackSlot.captured.onTokenRequestCompleted(null, AuthorizationException(1, 1, "error", "testError", null, null))
+            serviceCallbackSlot.captured.onTokenRequestCompleted(
+                null,
+                AuthorizationException(1, 1, "error", "testError", null, null)
+            )
         }
 
         signInManager.signIn(activity, callback)
@@ -183,4 +188,43 @@ class SignInManagerTest {
         verify { callback.onError(any()) }
     }
 
+    @Test
+    @TestRail
+    fun signInUsesCustomStateWhenProvided() = runBlocking {
+        val customState = "custom-state-value"
+        val configWithState = OIDCConfiguration.Builder()
+            .issuer("testIssuer")
+            .scopes(listOf("openid"))
+            .redirectUrl("redirectTest")
+            .clientId("testClientId")
+            .state(customState)
+            .build()
+
+        val signInManagerWithState = SignInManagerImpl(
+            configWithState,
+            authorizationService,
+            repository
+        ) { authRequest ->
+            // Verify the authorization request contains the custom state
+            assertEquals("Expected state to match custom state", customState, authRequest.state)
+            signInFragment
+        }
+
+        val serviceCallbackSlot = slot<AuthorizationService.TokenResponseCallback>()
+        every { signInFragment.resultChannel }.returns(produce<Pair<AuthorizationResponse?, AuthorizationException?>> {
+            send(spyResponse to null)
+        } as Channel)
+        every {
+            authorizationService.performTokenRequest(
+                any(),
+                capture(serviceCallbackSlot)
+            )
+        } answers {
+            serviceCallbackSlot.captured.onTokenRequestCompleted(mockk(), null)
+        }
+
+        signInManagerWithState.signIn(activity, callback)
+
+        verify { callback.onSuccess(any()) }
+    }
 }

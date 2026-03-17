@@ -8,6 +8,7 @@ To get more info about how to configure an app for OIDC visit the [Overview of O
 
 <!-- TOC depthFrom:2 depthTo:3 -->
 
+- [Support](#support)
 - [Installation](#installation)
 - [Configuration](#configuration)
   - [Configure a OneLogin application](#configure-a-onelogin-application)
@@ -23,12 +24,17 @@ To get more info about how to configure an app for OIDC visit the [Overview of O
   - [cancel](#cancel)
 - [Running Demo Apps](#running-demo-apps)
 
+
+## Support
+
+OneLogin by One Identity open source projects are supported through [OneLogin GitHub issues](https://github.com/onelogin/onelogin-oidc-android/issues). This includes all scripts, plugins, SDKs, modules, code snippets or other solutions. For assistance with any OneLogin by One Identity GitHub project, please raise a new Issue on the [OneLogin GitHub issues](https://github.com/onelogin/onelogin-oidc-android/issues) page. Requests for assistance made through official One Identity Support will be referred back to GitHub where those requests can benefit all users.
+
 ## Installation
 
 To install the library add the following dependency to the `build.gradle` file of your module:
 
 ```
-    include "com.onelogin.oidc:oidc:1.0.0"
+    implementation("com.onelogin:onelogin-oidc-android-sdk:1.0.0")
 ```
 
 
@@ -53,20 +59,25 @@ OIDCConfiguration.Builder()
     .redirectUrl(BuildConfig.REDIRECT_URL)
     .scopes(listOf("openid"))
     .isDebug(true)
+    .loginHint("test@email.com")
+    .state("custom-state-value")
     .build()
 ```
 
 The supported parameters of the configuration are:
 
-| Parameter     | Description                                                                                                       | Required |
-| ------------- |-------------------------------------------------------------------------------------------------------------------| -------- |
-| clientId      | The Client ID of your OneLogin Application                                                                        | Required |
-| issuer        | OIDC Issuer Url of your OneLogin Organization i.e. `https://example.onelogin.com/oidc/2`                          | Required |
-| redirectUrl   | Redirect Url specified in the OneLogin Application                                                                | Required |
-| scopes        | List of scopes of the authorization token, it should include `openid`                                             | Required |
-| isDebug       | Specifies if the instance of the library should be initialized in debug mode, wich will log additional information| Optional |
+| Parameter     | Description                                                                                                         | Required |
+| ------------- |---------------------------------------------------------------------------------------------------------------------| -------- |
+| clientId      | The Client ID of your OneLogin Application                                                                          | Required |
+| issuer        | OIDC Issuer Url of your OneLogin Organization i.e. `https://example.onelogin.com/oidc/2`                            | Required |
+| redirectUrl   | Redirect Url specified in the OneLogin Application                                                                  | Required |
+| scopes        | List of scopes of the authorization token, it should include `openid`                                               | Required |
+| loginHint     | A string hint to the Authorization Server about the login identifier the End-User might use to log in               | Optional |
+| state         | An opaque value used to maintain state between the request and callback to prevent CSRF attacks. If not provided, the library will auto-generate one | Optional |
+| isDebug       | Specifies if the instance of the library should be initialized in debug mode, which will log additional information | Optional |
 
-This initialization only needs to occur one time, and after this an instance of the `OIDCCLient` can be get by Calling `OneLoginOIDC.getClient()` this client is a singleton that can be used to perform any of the supported `OIDCClient` operations.
+
+This initialization only needs to occur one time, and after this an instance of the `OIDCClient` can be get by Calling `OneLoginOIDC.getClient()` this client is a singleton that can be used to perform any of the supported `OIDCClient` operations.
 
 ## Authorization Redirect
 

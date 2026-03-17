@@ -5,6 +5,7 @@ buildscript {
     ext.dokka_version = '0.10.1'
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
     dependencies {
@@ -14,14 +15,18 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.4.1'
     }
+}
+
+plugins {
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
 allprojects {
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
 }
@@ -29,3 +34,5 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+apply from: "${rootDir}/scripts/publish-root.gradle"

@@ -64,12 +64,31 @@ class OIDCConfigurationTest {
             .clientId("clientId")
             .redirectUrl("redirectUrl")
             .scopes(listOf("openid"))
+            .loginHint("testHint")
             .build()
 
         assertEquals("http://issuer.com", configuration.issuer)
         assertEquals("clientId", configuration.clientId)
         assertEquals("redirectUrl", configuration.redirectUrl)
         assertEquals(listOf("openid"), configuration.scopes)
+        assertEquals("testHint", configuration.loginHint)
     }
 
+    @Test
+    @TestRail
+    fun testConfigurationWithStateParameter() {
+        val configuration = OIDCConfiguration.Builder()
+            .issuer("http://issuer.com")
+            .clientId("clientId")
+            .redirectUrl("redirectUrl")
+            .scopes(listOf("openid"))
+            .state("custom-state-123")
+            .build()
+
+        assertEquals("http://issuer.com", configuration.issuer)
+        assertEquals("clientId", configuration.clientId)
+        assertEquals("redirectUrl", configuration.redirectUrl)
+        assertEquals(listOf("openid"), configuration.scopes)
+        assertEquals("custom-state-123", configuration.state)
+    }
 }

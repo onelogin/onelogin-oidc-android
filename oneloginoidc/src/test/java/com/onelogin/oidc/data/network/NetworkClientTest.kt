@@ -36,7 +36,6 @@ class NetworkClientTest {
             .build()
 
         client = NetworkClient(okHttpClient, configuration)
-
     }
 
     @After

@@ -11,7 +11,7 @@ android {
         minSdkVersion 19
         targetSdkVersion 30
         versionCode 1
-        versionName "1.0"
+        versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -29,11 +29,15 @@ dokka {
     outputFormat = 'javadoc'
 }
 
+configurations {
+    ktlint
+}
+
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core-ktx:1.3.0'
-    implementation 'net.openid:appauth:0.7.1'
+    implementation 'net.openid:appauth:0.11.1'
     implementation 'com.squareup.okhttp3:okhttp:4.5.0'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7'
@@ -49,7 +53,33 @@ dependencies {
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+    ktlint "com.pinterest:ktlint:0.36.0"
 }
 
-apply from: 'install.gradle'
-apply from: 'bintray.gradle'
+
+task ktlint(type: JavaExec, group: "verification") {
+    description = "Check Kotlin code style."
+    classpath = configurations.ktlint
+    main = "com.pinterest.ktlint.Main"
+    args "src/**/*.kt"
+    // to generate report in checkstyle format prepend following args:
+    // "--reporter=plain", "--reporter=checkstyle,output=${buildDir}/ktlint.xml"
+    // see https://github.com/pinterest/ktlint#usage for more
+}
+check.dependsOn ktlint
+
+task ktlintFormat(type: JavaExec, group: "formatting") {
+    description = "Fix Kotlin code style deviations."
+    classpath = configurations.ktlint
+    main = "com.pinterest.ktlint.Main"
+    args "-F", "src/**/*.kt"
+}
+
+ext {
+    PUBLISH_GROUP_ID = 'com.onelogin'
+    PUBLISH_VERSION = android.defaultConfig.versionName
+    PUBLISH_ARTIFACT_ID = 'onelogin-oidc-android-sdk'
+}
+
+apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
