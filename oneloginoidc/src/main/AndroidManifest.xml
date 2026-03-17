@@ -1,3 +1,17 @@
-<manifest package="com.onelogin.oidc">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.onelogin.oidc">
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+    </queries>
 
 </manifest>
