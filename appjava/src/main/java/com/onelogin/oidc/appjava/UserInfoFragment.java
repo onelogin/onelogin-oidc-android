@@ -50,7 +50,7 @@ public class UserInfoFragment extends Fragment {
                 userId.setText(userInfo.getSub());
                 email.setText(userInfo.getEmail());
                 preferredName.setText(userInfo.getPreferredUsername() != null ? userInfo.getPreferredUsername() : "Empty");
-                updatedAt.setText(userInfo.getUpdatedAt() != null ? userInfo.getUpdatedAt() : "Empty");
+                updatedAt.setText(userInfo.getUpdatedAt() != null ? String.valueOf(userInfo.getUpdatedAt()) : "Empty");
                 animator.setDisplayedChild(1);
             }
 
