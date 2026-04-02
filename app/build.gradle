@@ -14,8 +14,8 @@ def redirectUrl = properties.redirect_url ?: System.getenv('REDIRECT_URL') ?: ""
 def redirectScheme = properties.redirect_scheme ?: System.getenv('REDIRECT_SCHEME') ?: ""
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "com.onelogin.oidc.demo"

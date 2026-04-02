@@ -1,3 +1,19 @@
-<manifest package="com.onelogin.oidc">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.onelogin.oidc">
+
+    <!-- Required for Android 11+ (API 30) package visibility.
+         Without this, PackageManager.queryIntentActivities() returns an empty
+         list and AppAuth cannot discover available browsers, resulting in
+         ActivityNotFoundException when starting the sign-in flow. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+    </queries>
 
 </manifest>
