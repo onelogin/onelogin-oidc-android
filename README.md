@@ -1,4 +1,6 @@
 # Android OneLogin Open ID Connect Library
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fonelogin%2Fonelogin-oidc-android.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fonelogin%2Fonelogin-oidc-android?ref=badge_shield)
+
 
 This library is a kotlin wrapper for the AppAuth code to communicate with OneLogin as an OpenID Connect provider. It supports [Auth Code Flow + PKCE](https://developers.onelogin.com/openid-connect/guides/auth-flow-pkce) which is recommended for native apps. It also adds features specific to the OneLogin Provider as revoking and introspecting tokens.
 
@@ -221,3 +223,7 @@ client_id="Client ID" // Client ID of your OneLogin OIDC application
 redirect_url="com.example://" // Redirect url specified on your OIDC application
 redirect_scheme=com.onelogin // Scheme of the redirect url specified on your OIDC application
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fonelogin%2Fonelogin-oidc-android.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fonelogin%2Fonelogin-oidc-android?ref=badge_large)
