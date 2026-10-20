@@ -19,6 +19,7 @@ To get more info about how to configure an app for OIDC visit the [Overview of O
 - [API Overview](#api-overview)
   - [Callback](#callback)
   - [signIn](#signin)
+  - [signOut](#signout)
   - [revokeToken](#revoketoken)
   - [refreshToken](#refreshtoken)
   - [getSessionInfo](#getsessioninfo)
@@ -36,7 +37,7 @@ OneLogin by One Identity open source projects are supported through [OneLogin Gi
 To install the library add the following dependency to the `build.gradle` file of your module:
 
 ```
-    implementation("com.onelogin:onelogin-oidc-android-sdk:1.0.0")
+    implementation("com.onelogin:onelogin-oidc-android-sdk:1.2.0")
 ```
 
 
@@ -132,6 +133,26 @@ oidcClient.signIn(activity, object : Callback<SignInSuccess, SignInError> {
 
     override fun onError(loginError: SignInError) {
         // An error has occurred during the authentication process
+    }
+})
+```
+
+### signOut
+
+Ends the user's OneLogin session by opening the end session endpoint in the browser, then clears the stored tokens. The `redirectUrl` from the configuration is sent as the post logout redirect URI, so it must also be allowed as a post logout redirect in the OneLogin app.
+
+As with `signIn`, an `Activity` extending `AppCompatActivity` or `FragmentActivity` is required.
+
+```
+val oidcClient = OneLoginOIDC.getClient()
+
+oidcClient.signOut(activity, object : Callback<SignOutSuccess, SignOutError> {
+    override fun onSuccess(success: SignOutSuccess) {
+        // The user has been signed out and the stored tokens have been cleared
+    }
+
+    override fun onError(error: SignOutError) {
+        // An error occurred during the sign out process
     }
 })
 ```
