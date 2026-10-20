@@ -20,5 +20,5 @@ data class UserInfo(
     @SerializedName("groups")
     val groups: List<String>?,
     @SerializedName("params")
-    val params: Map<String, Any>?
+    val params: Map<String, Any>? = null
 )
