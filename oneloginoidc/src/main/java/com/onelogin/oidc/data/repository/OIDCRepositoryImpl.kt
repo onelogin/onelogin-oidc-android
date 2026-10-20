@@ -25,6 +25,8 @@ internal class OIDCRepositoryImpl(
         }
 
     override fun persistAuthState(authState: AuthState) {
+        if (!ownsStore()) return
+
         val serializedState = authState.jsonSerializeString()
         val encryptedState = encryptionManager.encrypt(serializedState)
         store.persist(AUTH_STATE_KEY, encryptedState)
@@ -41,17 +43,48 @@ internal class OIDCRepositoryImpl(
         store.clear(AUTH_STATE_KEY)
     }
 
+    /**
+     * The cached discovery document and the auth state both point at the issuer they came from, and
+     * tokens are refreshed against that issuer's endpoints. If the app is now configured with a
+     * different issuer, keeping them would keep issuing tokens the new issuer rejects, so drop both.
+     */
+    override fun discardStateFromOtherIssuer() {
+        val storedIssuer = store.fetch(ISSUER_KEY)
+        if (storedIssuer == configuration.issuer) return
+
+        val previousIssuer = storedIssuer ?: cachedDiscoveryIssuer()
+        if (previousIssuer?.trimEnd('/') != configuration.issuer.trimEnd('/')) {
+            store.clear(CONFIGURATIONS_KEY)
+            store.clear(AUTH_STATE_KEY)
+        }
+        store.persist(ISSUER_KEY, configuration.issuer)
+    }
+
+    // Stores written before the issuer was recorded only have the cached discovery document to go on
+    private fun cachedDiscoveryIssuer(): String? = runCatching {
+        store.fetch(CONFIGURATIONS_KEY)?.let {
+            val decryptedJson = encryptionManager.decrypt(it)
+            AuthorizationServiceConfiguration.fromJson(decryptedJson).discoveryDoc?.issuer
+        }
+    }.getOrNull()
+
+    // A request still in flight from a client set up for an earlier issuer must not write its state back
+    private fun ownsStore() = store.fetch(ISSUER_KEY) == configuration.issuer
+
     private suspend fun fetchConfigurationAndStore(): AuthorizationServiceConfiguration {
         val configuration = configurationClient.fetchConfiguration(configuration.issuer)
-        val serialized = configuration.toJsonString()
-        val encrypted = encryptionManager.encrypt(serialized)
-        store.persist(CONFIGURATIONS_KEY, encrypted)
+        if (ownsStore()) {
+            val serialized = configuration.toJsonString()
+            val encrypted = encryptionManager.encrypt(serialized)
+            store.persist(CONFIGURATIONS_KEY, encrypted)
+        }
         return configuration
     }
 
     companion object {
         private const val CONFIGURATIONS_KEY = "issuer_configurations"
         private const val AUTH_STATE_KEY = "authState"
+        private const val ISSUER_KEY = "issuer"
     }
 
     class AuthStateNotInitialized : IllegalStateException()

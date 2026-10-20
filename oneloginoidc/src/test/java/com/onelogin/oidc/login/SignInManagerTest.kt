@@ -10,6 +10,7 @@ import com.onelogin.oidc.Callback
 import com.onelogin.oidc.OIDCConfiguration
 import com.onelogin.oidc.TestRail
 import com.onelogin.oidc.data.repository.OIDCRepository
+import com.onelogin.oidc.data.repository.OIDCRepositoryImpl
 import io.mockk.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.produce
@@ -186,6 +187,29 @@ class SignInManagerTest {
 
         verify { authorizationService.performTokenRequest(any(), any()) }
         verify { callback.onError(any()) }
+    }
+
+    @Test
+    @TestRail
+    fun signInFailsIfStoredStateIsGoneAfterCodeExchange() = runBlocking {
+        val serviceCallbackSlot = slot<AuthorizationService.TokenResponseCallback>()
+        every { signInFragment.resultChannel }.returns(produce<Pair<AuthorizationResponse?, AuthorizationException?>> {
+            send(spyResponse to null)
+        } as Channel)
+        every {
+            authorizationService.performTokenRequest(
+                any(),
+                capture(serviceCallbackSlot)
+            )
+        } answers {
+            serviceCallbackSlot.captured.onTokenRequestCompleted(mockk(), null)
+        }
+        every { repository.getLatestAuthState() } throws OIDCRepositoryImpl.AuthStateNotInitialized()
+
+        signInManager.signIn(activity, callback)
+
+        verify { callback.onError(any()) }
+        verify(exactly = 0) { callback.onSuccess(any()) }
     }
 
     @Test

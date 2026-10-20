@@ -32,6 +32,7 @@ internal class OIDCClientFactory(
         val store = OneLoginStore(preferences)
         val repository =
             OIDCRepositoryImpl(configuration, configurationClient, store, encryptionManager)
+        repository.discardStateFromOtherIssuer()
         AuthorizationServiceProvider.init(context)
         val authorizationService = AuthorizationServiceProvider.authorizationService
         val signInManager = SignInManagerImpl(
