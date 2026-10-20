@@ -122,9 +122,11 @@ jobs:
           echo "Bundle contents:"
           ls -la
 
-          # Create the bundle zip (go back to repo root)
+          # Create the bundle zip with the Maven repository layout (com/...) at its root
+          cd "$GITHUB_WORKSPACE/bundle"
+          zip -r "$GITHUB_WORKSPACE/bundle.zip" .
           cd "$GITHUB_WORKSPACE"
-          zip -r bundle.zip bundle/
+          unzip -l bundle.zip | head -5
           echo "Bundle created: bundle.zip"
           ls -la bundle.zip
 
