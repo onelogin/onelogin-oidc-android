@@ -3,7 +3,9 @@ name: Publish library
 on:
   release:
     types:
-      - created
+      - published
+  # A manual run builds, signs and validates the bundle on Maven Central, then drops it without publishing
+  workflow_dispatch:
 
 jobs:
   publish-library:
@@ -11,6 +13,15 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
+
+      - name: Check release tag matches library version
+        if: github.event_name == 'release'
+        run: |
+          VERSION=$(grep -oP 'versionName "\K[^"]+' oneloginoidc/build.gradle)
+          if [ "${GITHUB_REF_NAME}" != "v${VERSION}" ]; then
+            echo "Release tag ${GITHUB_REF_NAME} does not match versionName ${VERSION} in oneloginoidc/build.gradle"
+            exit 1
+          fi
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
@@ -120,11 +131,12 @@ jobs:
       - name: Upload to Maven Central
         env:
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          PUBLISHING_TYPE: ${{ github.event_name == 'release' && 'AUTOMATIC' || 'USER_MANAGED' }}
         run: |
-          echo "Uploading bundle to Maven Central..."
+          echo "Uploading bundle to Maven Central (${PUBLISHING_TYPE})..."
 
           RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST "https://central.sonatype.com/api/v1/publisher/upload?publishingType=AUTOMATIC" \
+            -X POST "https://central.sonatype.com/api/v1/publisher/upload?publishingType=${PUBLISHING_TYPE}" \
             -H "Authorization: Bearer ${CENTRAL_TOKEN}" \
             -F "bundle=@bundle.zip")
 
@@ -144,9 +156,9 @@ jobs:
 
           # Poll for status
           echo "Waiting for deployment to complete..."
-          for i in {1..30}; do
-            sleep 10
-            STATUS_RESPONSE=$(curl -s \
+          for i in {1..60}; do
+            sleep 30
+            STATUS_RESPONSE=$(curl -s -X POST \
               -H "Authorization: Bearer ${CENTRAL_TOKEN}" \
               "https://central.sonatype.com/api/v1/publisher/status?id=${DEPLOYMENT_ID}")
 
@@ -157,11 +169,23 @@ jobs:
             if [ "$STATE" = "PUBLISHED" ]; then
               echo "Successfully published to Maven Central!"
               exit 0
+            elif [ "$STATE" = "VALIDATED" ] && [ "$PUBLISHING_TYPE" = "USER_MANAGED" ]; then
+              echo "Bundle passed validation, dropping the deployment without publishing it"
+              curl -s -f -X DELETE \
+                -H "Authorization: Bearer ${CENTRAL_TOKEN}" \
+                "https://central.sonatype.com/api/v1/publisher/deployment/${DEPLOYMENT_ID}"
+              exit 0
             elif [ "$STATE" = "FAILED" ]; then
-              echo "Deployment failed!"
+              echo "Deployment failed, see the errors in the last status check above"
               exit 1
             fi
           done
 
+          if [ "$STATE" = "PUBLISHING" ]; then
+            echo "::warning::Bundle passed validation but Maven Central has not finished publishing it. Check https://central.sonatype.com/publishing/deployments"
+            exit 0
+          fi
+
           echo "Timeout waiting for deployment. Final state: ${STATE}"
-          echo "Check https://central.sonatype.com for deployment status"
+          echo "Check https://central.sonatype.com/publishing/deployments for deployment status"
+          exit 1
