@@ -55,5 +55,25 @@ class UserInfoDeserializationTest {
         assertNull(result.givenName)
         assertNull(result.familyName)
         assertNull(result.groups)
+        assertNull(result.params)
+    }
+
+    @Test
+    fun deserializesCustomParams() {
+        val json = """
+            {
+              "sub": "12345",
+              "email": "user@example.com",
+              "params": {
+                "Birthplace": "Lisbon",
+                "Roles": ["admin", "auditor"]
+              }
+            }
+        """.trimIndent()
+
+        val result = gson.fromJson(json, UserInfo::class.java)
+
+        assertEquals("Lisbon", result.params?.get("Birthplace"))
+        assertEquals(listOf("admin", "auditor"), result.params?.get("Roles"))
     }
 }

@@ -196,6 +196,7 @@ val oidcClient = OneLoginOIDC.getClient()
 oidcClient.getUserInfo(object : Callback<UserInfo, UserInfoError> {
     override fun onSuccess(success: UserInfo) {
         // User info has been retrieved correction success contains the current user information
+        // Custom parameters (requested with the `params` scope) are in success.params
     }
 
     override fun onError(error: UserInfoError) {
