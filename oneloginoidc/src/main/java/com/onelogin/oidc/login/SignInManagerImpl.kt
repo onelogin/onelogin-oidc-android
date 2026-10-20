@@ -59,10 +59,15 @@ internal class SignInManagerImpl(
                     )
                 )
             } else if (tokenResponse != null) {
-                val state = repository.getLatestAuthState()
-                state.update(tokenResponse, authorizationException)
-                repository.persistAuthState(state)
-                signInCallback.onSuccess(SignInSuccess(SessionInfo.fromAuthState(state)))
+                // The stored state is gone if the client was set up again for another issuer mid sign-in
+                runCatching { repository.getLatestAuthState() }.fold(
+                    { state ->
+                        state.update(tokenResponse, authorizationException)
+                        repository.persistAuthState(state)
+                        signInCallback.onSuccess(SignInSuccess(SessionInfo.fromAuthState(state)))
+                    },
+                    { signInCallback.onError(SignInError(it.message, it)) }
+                )
             }
         }
     }

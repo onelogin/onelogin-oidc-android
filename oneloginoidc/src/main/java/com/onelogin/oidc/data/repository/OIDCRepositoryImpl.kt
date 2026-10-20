@@ -25,8 +25,7 @@ internal class OIDCRepositoryImpl(
         }
 
     override fun persistAuthState(authState: AuthState) {
-        // A request still in flight from a client set up for an earlier issuer must not restore its state
-        if (store.fetch(ISSUER_KEY) != configuration.issuer) return
+        if (!ownsStore()) return
 
         val serializedState = authState.jsonSerializeString()
         val encryptedState = encryptionManager.encrypt(serializedState)
@@ -69,11 +68,16 @@ internal class OIDCRepositoryImpl(
         }
     }.getOrNull()
 
+    // A request still in flight from a client set up for an earlier issuer must not write its state back
+    private fun ownsStore() = store.fetch(ISSUER_KEY) == configuration.issuer
+
     private suspend fun fetchConfigurationAndStore(): AuthorizationServiceConfiguration {
         val configuration = configurationClient.fetchConfiguration(configuration.issuer)
-        val serialized = configuration.toJsonString()
-        val encrypted = encryptionManager.encrypt(serialized)
-        store.persist(CONFIGURATIONS_KEY, encrypted)
+        if (ownsStore()) {
+            val serialized = configuration.toJsonString()
+            val encrypted = encryptionManager.encrypt(serialized)
+            store.persist(CONFIGURATIONS_KEY, encrypted)
+        }
         return configuration
     }
 

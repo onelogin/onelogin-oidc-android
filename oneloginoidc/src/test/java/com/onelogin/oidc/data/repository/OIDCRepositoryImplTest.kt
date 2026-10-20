@@ -48,6 +48,7 @@ class OIDCRepositoryImplTest {
     @TestRail
     fun testGetConfigurationsPullsFromNetworkAndStoresWhenNoLocalValue(): Unit = runBlocking {
         every { store.fetch(any()) }.returns(null)
+        every { store.fetch("issuer") }.returns("testIssuer")
         every { store.persist(any(), any()) }.returns(true)
         every { encryptionManager.encrypt(any()) }.returns("encrypted")
         coEvery { configurationClient.fetchConfiguration(any()) }.returns(dummyIssuerConfiguration)
@@ -58,6 +59,19 @@ class OIDCRepositoryImplTest {
         coVerify(exactly = 1) { configurationClient.fetchConfiguration("testIssuer") }
         verify(exactly = 1) { encryptionManager.encrypt(dummyIssuerConfiguration.toJsonString()) }
         verify(exactly = 1) { store.persist("issuer_configurations", "encrypted") }
+        assertEquals(dummyIssuerConfiguration, result)
+    }
+
+    @Test
+    @TestRail
+    fun testGetConfigurationsSkipsCacheWhenStoreBelongsToAnotherIssuer(): Unit = runBlocking {
+        every { store.fetch(any()) }.returns(null)
+        every { store.fetch("issuer") }.returns("newerIssuer")
+        coEvery { configurationClient.fetchConfiguration(any()) }.returns(dummyIssuerConfiguration)
+
+        val result = repository.getConfigurations()
+
+        verify(exactly = 0) { store.persist(any(), any()) }
         assertEquals(dummyIssuerConfiguration, result)
     }
 
