@@ -8,4 +8,5 @@ internal interface OIDCRepository {
     fun persistAuthState(authState: AuthState)
     fun getLatestAuthState(): AuthState
     fun clearAuthState()
+    fun discardStateFromOtherIssuer()
 }

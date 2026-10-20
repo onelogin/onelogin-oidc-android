@@ -10,6 +10,9 @@ import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationServiceConfiguration
+import net.openid.appauth.AuthorizationServiceDiscovery
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -108,4 +111,86 @@ class OIDCRepositoryImplTest {
 
         verify { store.clear("authState") }
     }
+
+    @Test
+    @TestRail
+    fun testKeepsStateWhenStoredIssuerMatches() {
+        every { store.fetch("issuer") }.returns("testIssuer")
+
+        repository.discardStateFromOtherIssuer()
+
+        verify(exactly = 0) { store.clear(any()) }
+        verify(exactly = 0) { store.persist(any(), any()) }
+    }
+
+    @Test
+    @TestRail
+    fun testDiscardsStateWhenStoredIssuerDiffers() {
+        every { store.fetch("issuer") }.returns("previousIssuer")
+        every { store.clear(any()) }.returns(Unit)
+        every { store.persist(any(), any()) }.returns(true)
+
+        repository.discardStateFromOtherIssuer()
+
+        verify { store.clear("issuer_configurations") }
+        verify { store.clear("authState") }
+        verify { store.persist("issuer", "testIssuer") }
+    }
+
+    @Test
+    @TestRail
+    fun testKeepsStateWithoutStoredIssuerWhenCachedDiscoveryMatches() {
+        val repository = repositoryForIssuer("https://example.onelogin.com/oidc/2")
+        every { store.fetch("issuer") }.returns(null)
+        every { store.fetch("issuer_configurations") }.returns("encryptedConfig")
+        every { encryptionManager.decrypt("encryptedConfig") }
+            .returns(discoveredConfiguration("https://example.onelogin.com/oidc/2/").toJsonString())
+        every { store.persist(any(), any()) }.returns(true)
+
+        repository.discardStateFromOtherIssuer()
+
+        verify(exactly = 0) { store.clear(any()) }
+        verify { store.persist("issuer", "https://example.onelogin.com/oidc/2") }
+    }
+
+    @Test
+    @TestRail
+    fun testDiscardsStateWithoutStoredIssuerWhenCachedDiscoveryDiffers() {
+        val repository = repositoryForIssuer("https://example.onelogin.com/oidc/2")
+        every { store.fetch("issuer") }.returns(null)
+        every { store.fetch("issuer_configurations") }.returns("encryptedConfig")
+        every { encryptionManager.decrypt("encryptedConfig") }
+            .returns(discoveredConfiguration("https://previous.onelogin.com/oidc/2").toJsonString())
+        every { store.clear(any()) }.returns(Unit)
+        every { store.persist(any(), any()) }.returns(true)
+
+        repository.discardStateFromOtherIssuer()
+
+        verify { store.clear("issuer_configurations") }
+        verify { store.clear("authState") }
+        verify { store.persist("issuer", "https://example.onelogin.com/oidc/2") }
+    }
+
+    private fun repositoryForIssuer(issuer: String): OIDCRepository {
+        val configuration = OIDCConfiguration.Builder()
+            .issuer(issuer)
+            .clientId("testClientId")
+            .redirectUrl("testRedirectUrl")
+            .scopes(listOf("openid"))
+            .build()
+        return OIDCRepositoryImpl(configuration, configurationClient, store, encryptionManager)
+    }
+
+    private fun discoveredConfiguration(issuer: String) = AuthorizationServiceConfiguration(
+        AuthorizationServiceDiscovery(
+            JSONObject()
+                .put("issuer", issuer)
+                .put("authorization_endpoint", "$issuer/auth")
+                .put("token_endpoint", "$issuer/token")
+                .put("jwks_uri", "$issuer/certs")
+                .put("response_types_supported", JSONArray().put("code"))
+                .put("subject_types_supported", JSONArray().put("public"))
+                .put("id_token_signing_alg_values_supported", JSONArray().put("RS256"))
+        )
+    )
 }
