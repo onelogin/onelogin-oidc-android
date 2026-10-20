@@ -25,6 +25,9 @@ internal class OIDCRepositoryImpl(
         }
 
     override fun persistAuthState(authState: AuthState) {
+        // A request still in flight from a client set up for an earlier issuer must not restore its state
+        if (store.fetch(ISSUER_KEY) != configuration.issuer) return
+
         val serializedState = authState.jsonSerializeString()
         val encryptedState = encryptionManager.encrypt(serializedState)
         store.persist(AUTH_STATE_KEY, encryptedState)

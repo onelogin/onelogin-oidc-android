@@ -79,6 +79,7 @@ class OIDCRepositoryImplTest {
     @TestRail
     fun testPersistAuthState() {
         val authState = spyk(AuthState())
+        every { store.fetch("issuer") }.returns("testIssuer")
         every { encryptionManager.encrypt(any()) }.returns("encrypted")
         every { store.persist(any(), any()) }.returns(true)
 
@@ -87,6 +88,16 @@ class OIDCRepositoryImplTest {
         verify { authState.jsonSerializeString() }
         verify { encryptionManager.encrypt("{}") }
         verify { store.persist("authState", "encrypted") }
+    }
+
+    @Test
+    @TestRail
+    fun testPersistAuthStateSkippedWhenStoreBelongsToAnotherIssuer() {
+        every { store.fetch("issuer") }.returns("newerIssuer")
+
+        repository.persistAuthState(AuthState())
+
+        verify(exactly = 0) { store.persist(any(), any()) }
     }
 
     @Test
